@@ -1,0 +1,53 @@
+{
+	"name": "lilac",
+	"version": "1.2.7",
+	"displayName": "Lilac",
+	"description": "A dark theme with pretty pastel colours.",
+	"publisher": "shubham-saudolla",
+	"repository": "https://github.com/shubham-saudolla/Lilac-Theme.git",
+	"license": "MIT",
+	"icon": "icon.png",
+	"galleryBanner": {
+		"color": "#000000",
+		"theme": "dark"
+	},
+	"keywords": [
+		"lilac",
+		"pastel",
+		"dark",
+		"theme",
+		"aesthetic",
+		"goth",
+		"pink",
+		"synthwave",
+		"vaporwave",
+		"contrast",
+		"pretty"
+	],
+	"engines": {
+		"vscode": "^1.33.0"
+	},
+	"categories": [
+		"Themes"
+	],
+	"contributes": {
+		"themes": [
+			{
+				"label": "Lilac",
+				"uiTheme": "vs-dark",
+				"path": "themes/Lilac-color-theme.json"
+			}
+		]
+	},
+	"__metadata": {
+		"id": "1bfca39f-30a9-45e3-8631-027297c85b5c",
+		"publisherId": "78fe18ff-9010-47d7-97c6-9f44b97405c2",
+		"publisherDisplayName": "shubham-saudolla",
+		"targetPlatform": "universal",
+		"isApplicationScoped": false,
+		"updated": false,
+		"isPreReleaseVersion": false,
+		"installedTimestamp": 1668779263245,
+		"preRelease": false
+	}
+}

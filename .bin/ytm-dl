@@ -1,0 +1,7 @@
+#!/bin/bash
+cd ~/Music
+echo 'put link of yt'
+read x
+youtube-dl --extract-audio --audio-format mp3 -i --ignore-config --yes-playlist --no-part --no-warnings -w -c -R 15 --output "%(title)s.%(ext)s" $x
+youtube-dl --write-thumbnail --skip-download -w --output "%(title)s" $x
+magick mogrify -format jpg *.webp

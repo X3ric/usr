@@ -1,0 +1,521 @@
+/**
+ * @name Dark Matter X
+ * @author WolfSanchez
+ * @version 3.0.0
+ * @description DarkTransparentX
+ * @source https://github.com/DiscordStyles/DarkMatter/
+*/
+
+@import url('https://mwittrien.github.io/BetterDiscordAddons/Themes/BlurpleRecolor/BlurpleRecolor.css');
+
+button {
+	--accentcolor: var(--accent-alt);
+}
+
+ 
+:root {
+	--usesettingsicons: calc(var(--settingsicons, 1) / (var(--settingsicons, 1) + 0.00000000000000000000001));
+	--settingsiconssize: 18px;
+	--settingsiconsgap: 14px;
+    --font-primary: 'OCR A' ;
+	--font-display: var(--font-primary) !important;
+	/* Dark Matter Variables */
+    /*--avatar-size:        16px;*/
+	--background-color: rgba(8,8,8,0.95);
+    --background-image:  url('');
+    --home-image:        url('https://64.media.tumblr.com/8da1fc2835ca6dd2879980fbc54babf9/tumblr_mxr0wx1BlO1sso6sco1_500.gifv');
+    --background-solid:      rgba(8,8,8,0.5);
+    --background-solid-dark:      rgba(5,5,5,0.5);
+    --background-solid-darker:       rgba(3, 3, 3, 0.35);
+    --accent:  128,37,230;
+    --accent-alt:  87,29,133;
+    --black: 0, 0, 0 / 0.5;
+	--white: 255, 255, 255;
+	/* BlurpleRecolor */
+	--accentcolor: var(--accent);
+	--vaccentcolor-hover: rgba(var(--accent), 0.75);
+	--vaccentcolor-active: rgba(var(--accent), 0.75);
+}
+
+
+.theme-dark,
+.theme-light {
+	/* Discord vars */
+	--background-primary: var(--background-solid);
+	--background-mobile-primary: var(--background-primary);
+	--background-secondary: var(--background-solid);
+	--background-mobile-secondary: var(--background-secondary);
+	--background-secondary-alt: var(--background-solid);
+	--background-tertiary: var(--background-solid);
+	--background-floating: var(--background-solid);
+	--background-secondary: var(--background-solid);
+	--background-accent: var(--background-solid);
+	--background-message-hover: rgba(var(--black), 0.4);
+	--channeltextarea-background: transparent;
+	--activity-card-background: rgba(var(--white), 0.05);
+	--deprecated-store-bg: transparent;
+	--background-modifier-hover: rgba(var(--black), 0.3);
+	--background-modifier-active: rgba(var(--black), 0.3);
+	--background-modifier-selected: rgba(var(--black), 0.6);
+	--elevation-low: inset 0 -1px 0 0 rgba(var(--black), 0.3);
+	--channels-default: rgba(var(--white), 0.3);
+	--deprecated-quickswitcher-input-background: var(--background-solid);
+	--header-primary: rgba(var(--white), 0.75);
+	--header-secondary: rgba(var(--white), 0.6);
+	--text-normal: rgba(var(--white), 0.6);
+	--text-muted: #8a8e94;
+	--interactive-muted: rgba(var(--white), 0.15);
+	--interactive-normal: rgba(var(--white), 0.5);
+	--interactive-hover: rgba(var(--white), 0.75);
+	--interactive-active: rgba(var(--white), 0.75);
+	--deprecated-card-bg: rgba(var(--white), 0.05);
+	--text-link: rgba(var(--accent), 0.75);
+	--focus-primary: rgba(var(--accent), 0.75);
+}
+
+ ::selection {
+	background-color: rgba(var(--accent-alt), 0.5);
+}
+
+/* Guilds */
+
+
+ul[data-list-id='guildsnav'] ::-webkit-scrollbar {
+	display: none;
+}
+
+[data-list-id='guildsnav'] [class^="pill-"] span[style^="opacity: 1; height: 40"] {
+	--header-primary: rgba(var(--accent), 0.75);
+}
+
+span[class^="expandedFolderBackground-"] {
+	--background-secondary: rgba(var(--black), 0.25);
+}
+
+
+div[data-list-item-id="guildsnav___home"] {
+	background: var(--home-image) top center/110% no-repeat;
+}
+
+
+#app-mount [data-list-item-id="guildsnav___home"]>div {
+	color: transparent;
+	background-color: transparent;
+}
+
+div[data-list-item-id="guildsnav___create-join-button"],
+div[data-list-item-id="guildsnav___guild-discover-button"] {
+	background-color: var(--background-solid) !important;
+	color: rgba(var(--white), 0.3) !important;
+}
+
+div[data-list-item-id="guildsnav___create-join-button"]:hover,
+div[data-list-item-id="guildsnav___guild-discover-button"]:hover {
+	opacity: 1;
+}
+
+
+/* Sidebar */
+
+
+div[class^="sidebar-"] nav,
+#private-channels {
+	background-color: transparent;
+	--background-tertiary: rgba(var(--black), 0.35);
+}
+
+
+div[id^="members-"] {
+	--background-secondary: rgba(var(--black), 0.4);
+	--background-modifier-hover: rgba(var(--white), 0.07);
+	--background-modifier-active: var(--background-modifier-hover);
+	--background-modifier-selected: rgba(var(--white), 0.07);
+}
+
+div[id^="members-"]>div {
+	background-color: transparent;
+}
+
+div[id^="members-"] [class*="placeholder"] {
+	--backgorund-primary: var(--text-normal);
+}
+
+div[class^='nowPlayingColumn'] {
+	--background-secondary: transparent;
+	--background-primary: rgba(var(--black), 0.5);
+	--background-modifier-hover: rgba(var(--white), 0.075);
+}
+
+#channels div[class^="unread-"] {
+	--interactive-active: rgba(var(--accent), 0.75);
+}
+
+
+/* Sidebar Header */
+
+div[class*='clickable-'][aria-expanded]>header {
+	--background-accent: rgba(var(--accent), 0.15);
+	--background-modifier-hover: rgba(var(--black), 0.25);
+}
+
+/* Outer containers */
+
+#app-mount {
+	--background-tertiary: transparent;
+	--background-secondary: transparent;
+	background: var(--background-image) center/cover no-repeat;
+}
+
+#app-mount>div[class^="app-"] {
+	--background-tertiary: transparent;
+	--background-secondary: rgba(var(--black), 0.7);
+	background-color: rgba(var(--black), 0.4);
+}
+
+
+div[class^='base-']>div {
+	--background-secondary: rgba(var(--black), 0.7);
+	--background-tertiary: rgba(var(--white), 0.05);
+	--background-primary: rgba(var(--black), 0.8);
+}
+
+#app-mount>div:not([class^="app-"]),
+.autocomplete-1vrmpx {
+	--background-primary: var(--background-solid);
+	--background-secondary: var(--background-solid-dark);
+	--background-secondary-alt: var(--background-solid-darker);
+	--background-tertiary: var(--background-solid-darker);
+}
+
+
+
+/* Header */
+
+section[class*="themed-"] {
+	box-shadow: var(--elevation-low);
+	--background-secondary: rgba(var(--white), 0.1);
+}
+
+section>div>a[href="https:https://support.discord.com"] {
+	display: none;
+}
+
+section[class*="themed-"]::before,
+section[class*="themed-"] ::after {
+	content: none;
+}
+
+
+
+section div[class^="toolbar"]>div[role][class*="selected-"] {
+	background-color: rgba(var(--white), 0.1);
+}
+
+
+/* Panels */
+
+div[class^='sidebar-']>section {
+	--background-primary: rgba(var(--white), 0.07);
+	--background-secondary: rgba(var(--white), 0.1);
+	--background-secondary-alt: rgba(var(--black), 0.75);
+}
+
+div[class^='sidebar-']>section>div:last-child {
+	background-color: var(--background-secondary-alt);
+}
+
+
+/* Codeblocks */
+
+html pre {
+	background: transparent;
+}
+
+pre code.hljs {
+	background-color: rgba(var(--white), 0.1);
+	color: rgba(var(--white), 0.7);
+}
+
+html code.inline,
+html code.inline {
+	background: rgba(var(--white), 0.1);
+	color: rgba(var(--white), 0.7);
+}
+
+
+/* Settings */
+
+div[aria-label*="_SETTINGS"],
+div[aria-label*="_DEBUG"] {
+	--background-primary: transparent;
+	--background-secondary: rgba(var(--black), 0.7);
+}
+
+div[class^="sidebarRegionScroller-"]>nav {
+	--background-secondary: transparent;
+}
+
+div[class^="contentRegion-"] {
+	--background-primary: rgba(var(--black), 0.4);
+}
+
+div[class^="contentRegion-"] div[style^="overflow: hidden scroll"] {
+	background-color: transparent;
+	--background-primary: rgba(var(--black), 0.1);
+	--background-secondary: rgba(var(--black), 0.2);
+	--background-secondary-alt: rgba(var(--black), 0.25);
+	--background-tertiary: rgba(var(--white), 0.1);
+}
+
+div[aria-label*="_SETTINGS"] aside>div {
+	--background-primary: transparent;
+}
+
+div[aria-label*="_SETTINGS"] aside>div::-webkit-scrollbar-track {
+	visibility: hidden !important;
+}
+
+.bd-addon-list {
+	--background-secondary: var(--background-solid);
+	--background-secondary-alt: var(--background-solid-dark);
+}
+
+
+/* Tab Bar */
+
+div[class*="topPill"],
+nav>div[role="tablist"],
+.bd-tab-bar {
+	--background-accent: rgba(var(--accent));
+	--background-modifier-hover: rgba(var(--white), 0.05);
+	--background-modifier-active: rgba(var(--white), 0.075);
+	--background-modifier-selected: rgba(var(--accent), 0.25);
+}
+
+
+/* Server Discovery */
+
+div[class^="sidebar"]+[class^="pageWrapper"] {
+	--background-secondary: rgba(var(--black), 0.8);
+	background-color: var(--background-secondary);
+}
+
+
+/* Crash Page */
+
+div[class*="errorPage"] {
+	--background-secondary: rgba(var(--black), 0.7) !important;
+}
+
+
+/* Tooltips */
+
+div[class^="tooltip-"] {
+	--background-floating: rgba(var(--accent-alt), 0.75);
+	--text-normal: #e0e0e0;
+}
+
+
+/* Buttons */
+
+button[class*="button-"][class*="color"],
+.bd-button {
+	--vaccentcolor: var(--accent-alt);
+}
+
+.bd-button {
+	--bd-blue: rgba(var(--accent-alt), 0.75);
+}
+
+
+/* Context Menu */
+
+div[role="menuitem"] {
+	--vaccentcolor: var(--accent-alt);
+}
+
+div[role="menuitem"]:active {
+	--vaccentcolor: var(--accent);
+}
+
+
+/* Depreceated Components */
+
+
+/* These use hardcoded colors, no need to bother with strange selectors */
+
+#app-mount .footer-2gL1pp,
+#app-mount .footer-3mqk7D {
+	background-color: var(--background-secondary);
+}
+
+#app-mount .root-1gCeng,
+#app-mount .addGamePopout-2RY8Ju,
+#app-mount .keyboardShortcutsModal-3piNz7,
+#app-mount .emojiAliasInput-1y-NBz .emojiInput-1aLNse,
+.perksModal-fSYqOq .perk-2WeBWW,
+#app-mount .uploadModal-2ifh8j,
+#app-mount .contentWrapper-3WC1ID,
+#app-mount .contentWarningPopout-n5JsIs {
+	background-color: var(--background-primary);
+}
+
+#app-mount .codeRedemptionRedirect-1wVR4b,
+#app-mount .userSettingsVoice-iwdUCU .previewOverlay-2O7_KC,
+#app-mount .inset-3sAvek {
+	background-color: var(--background-tertiary);
+}
+
+#app-mount .paymentPane-3bwJ6A,
+#app-mount .tierBody-x9kBBp,
+#app-mount .tierBody-16Chc9,
+#app-mount .barBackground-2EEiLw,
+#app-mount .body-3iLsc4,
+#app-mount .footer-1fjuF6,
+#app-mount .container-3ayLPN,
+#app-mount .colorPickerCustom-2CWBn2,
+#app-mount .tierMarkerBackground-3q29am,
+.css-3vaxre-menu,
+.css-dwar6a-menu,
+#app-mount .autocomplete-1vrmpx,
+.categoryHeader-O1zU94,
+#app-mount .popoutList-T9CKZQ,
+#app-mount .quickSelectPopout-X1hvgV,
+.colorable-1bkp8v.primaryDark-3mSFDl,
+.tile-2naSqK,
+.videoWrapper-2v09vt,
+#app-mount .spoilerText-3p6IlD.hidden-HHr2R9 {
+	background-color: var(--background-solid);
+}
+
+#app-mount .expandedInfo-3kfShd,
+#app-mount .tierHeaderLocked-1a2opw,
+#app-mount .tierHeaderLocked-1s2JJz,
+#app-mount .headerNormal-T_seeN,
+#app-mount .focused-2bY0OD,
+.colorable-1bkp8v.primaryDark-3mSFDl:hover {
+	background-color: var(--background-solid-dark);
+}
+
+#app-mount .payment-xT17Mq {
+	background-color: transparent;
+	border-bottom-color: rgba(var(--white), 0.025);
+}
+
+#app-mount .bottomDivider-1K9Gao,
+#app-mount .focused-2bY0OD {
+	border-bottom-color: var(--background-solid-dark);
+}
+
+#app-mount div[data-list-id="billing-history"],
+#app-mount .media-engine-video,
+.react-datepicker,
+.react-datepicker__header,
+.react-datepicker__day--outside-month,
+.react-datepicker__day--disabled {
+	background-color: transparent !important;
+}
+
+.react-datepicker__day--disabled {
+	opacity: .6;
+}
+
+#app-mount .react-datepicker__day {
+	border-top-color: var(--background-secondary);
+	border-left-color: var(--background-secondary);
+}
+
+#app-mount .background-3xPPFc,
+#app-mount .tierInProgress-3mBoXq {
+	color: var(--background-solid);
+}
+
+
+#app-mount .option-96V44q.selected-rZcOL-,
+#app-mount .selected-1Tbx07,
+#app-mount .quickSelectPopoutOption-opKBx9:hover,
+#app-mount .outer-1AjyKL.active-1xchHY,
+#app-mount .outer-1AjyKL.interactive-3B9GmY:hover {
+	background-color: var(--background-modifier-hover);
+}
+
+.css-3vaxre-menu,
+.tierMarker-5HkGJ_[style] {
+	border-color: rgba(var(--white), 0.025) !important;
+}
+
+#app-mount .searchAnswer-3Dz2-q,
+#app-mount .searchFilter-2ESiM3,
+#app-mount .option-1B5ZV8,
+#app-mount .pill-2pQByF {
+	background-color: rgba(var(--accent-alt), 0.75);
+	color: #fff;
+}
+
+#app-mount .keybindShortcut-1BD6Z1 span {
+	background: var(--background-solid-dark);
+}
+
+#app-mount .perksModal-fSYqOq {
+	background: rgba(var(--black), 0.7);
+}
+
+#app-mount .card-FDVird:before {
+	background: var(--background-modifier-hover);
+	border: none;
+}
+
+
+/* Login Page */
+
+div[class^="splashBackground"] canvas,
+div[class^="splashBackground"] img {
+	display: none;
+}
+
+body #app-mount .sidebarRegion-1VBisG {
+	flex-basis: calc(218px + (var(--usesettingsicons) * (var(--settingsiconssize) + var(--settingsiconsgap)))) !important;
+}
+body #app-mount .sidebar-nqHbhN,
+body #app-mount .layer-86YKbF ~ .layer-86YKbF .sidebar-nqHbhN {
+	width: calc(218px + (var(--usesettingsicons) * (var(--settingsiconssize) + var(--settingsiconsgap)))) !important;
+}
+
+.bd-server-search ~ .item-3XjbnG::before {
+	display: none;
+}
+.sidebar-nqHbhN .side-2ur1Qk .item-3XjbnG .icon-3FU6Ir,
+.sidebar-nqHbhN .side-2ur1Qk .premiumLabel-3HPvdB svg,
+.sidebar-nqHbhN .side-2ur1Qk .tabBarItemContainer-2HdIlr svg {
+	transform: scaleX(calc(1 - var(--usesettingsicons)));
+}
+
+#BDFDB-card svg path[d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"],
+#ZeresPluginLibrary-card svg path[d="M20.5 11H19V7c0-1.1-.9-2-2-2h-4V3.5C13 2.12 11.88 1 10.5 1S8 2.12 8 3.5V5H4c-1.1 0-1.99.9-1.99 2v3.8H3.5c1.49 0 2.7 1.21 2.7 2.7s-1.21 2.7-2.7 2.7H2V20c0 1.1.9 2 2 2h3.8v-1.5c0-1.49 1.21-2.7 2.7-2.7 1.49 0 2.7 1.21 2.7 2.7V22H17c1.1 0 2-.9 2-2v-4h1.5c1.38 0 2.5-1.12 2.5-2.5S21.88 11 20.5 11z"] {
+	d: path("m 6.375,0.75 c -0.3886406,0 -0.703125,0.3144844 -0.703125,0.703125 v 14.0625 c 0,0.388641 0.3144844,0.703125 0.703125,0.703125 3.252375,0 4.608656,1.798453 4.921875,2.296875 V 2.3886719 C 10.323656,1.5753438 8.760938,0.75 6.375,0.75 Z M 3.5625,2.15625 c -0.3886406,0 -0.703125,0.3144844 -0.703125,0.703125 v 15.46875 c 0,0.388641 0.3144844,0.703125 0.703125,0.703125 H 9.929688 C 9.535891,18.553922 8.503875,17.625 6.375,17.625 5.2118437,17.625 4.265625,16.678781 4.265625,15.515625 V 2.15625 Z m 11.25,0 c -0.794437,0 -1.519969,0.2745469 -2.109375,0.7207031 V 19.734375 c 0,-0.387938 0.315188,-0.703125 0.703125,-0.703125 h 7.03125 c 0.388641,0 0.703125,-0.314484 0.703125,-0.703125 V 2.859375 c 0,-0.3886406 -0.314484,-0.703125 -0.703125,-0.703125 z M 0.703125,3.5625 C 0.3144844,3.5625 0,3.8769844 0,4.265625 v 16.875 c 0,0.388641 0.3144844,0.703125 0.703125,0.703125 H 8.605469 C 8.895906,22.662234 9.677063,23.25 10.59375,23.25 h 2.8125 c 0.916687,0 1.697797,-0.587766 1.988281,-1.40625 h 7.902344 C 23.685516,21.84375 24,21.529266 24,21.140625 v -16.875 C 24,3.8769844 23.685516,3.5625 23.296875,3.5625 H 22.59375 v 14.765625 c 0,1.163156 -0.993094,2.109375 -2.15625,2.109375 H 13.988281 C 13.697844,21.255984 12.916688,21.84375 12,21.84375 c -0.916687,0 -1.697797,-0.587766 -1.988281,-1.40625 H 3.5625 c -1.1631562,0 -2.15625,-0.946219 -2.15625,-2.109375 V 3.5625 Z");
+}
+svg path[d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"] {
+	d: path("m 14.695239,1.9999995 c -0.172564,0 -0.345192,0.065287 -0.476856,0.1969323 L 8.8655558,7.5499113 16.449678,15.134249 21.802505,9.7812686 c 0.263327,-0.26329 0.263327,-0.690404 0,-0.953738 L 20.790203,7.8168279 C 20.561354,7.5879722 20.201783,7.553571 19.934142,7.7354508 l -2.127134,1.4452558 1.437076,-2.1418429 c 0.179492,-0.2675152 0.144859,-0.6250542 -0.083,-0.852831 L 16.965593,3.9921086 C 16.762949,3.7894605 16.453901,3.7358929 16.195788,3.8602778 l -0.379206,0.183912 0.18228,-0.4036299 C 16.114073,3.3850021 16.058716,3.0852515 15.860524,2.8870088 L 15.172095,2.1969318 C 15.040454,2.065287 14.867803,1.9999995 14.695239,1.9999995 Z M 7.8695296,8.5459656 6.3201554,10.095384 c -0.1264491,0.126453 -0.1969268,0.298047 -0.1969268,0.47687 0,0.178823 0.070432,0.350462 0.1969268,0.476869 l 1.4696269,1.46967 c 0.2831508,0.283158 0.4212717,0.6744 0.3775785,1.072548 -0.043647,0.397879 -0.264001,0.749537 -0.6021726,0.965131 -4.3184211,2.752831 -4.7209389,3.155335 -4.8531868,3.287631 -0.9493352,0.949318 -0.9493352,2.494468 0,3.443875 0.9502792,0.950307 2.4954758,0.948419 3.443777,0 0.1323379,-0.132296 0.5349645,-0.535005 3.2875377,-4.853324 0.215049,-0.337372 0.5670569,-0.556823 0.9651039,-0.600563 0.399307,-0.04356 0.790042,0.09352 1.072518,0.375962 l 1.469627,1.469669 c 0.263283,0.26329 0.690429,0.26329 0.953712,0 l 1.549374,-1.549419 z M 4.4762048,18.571614 c 0.2439024,0 0.4877049,0.0922 0.6737825,0.278309 0.3722002,0.372165 0.3722002,0.975393 0,1.347604 -0.3722002,0.372211 -0.9754096,0.372211 -1.347565,0 -0.3722,-0.372211 -0.3722,-0.975439 0,-1.347604 0.1861001,-0.186105 0.4298801,-0.278309 0.6737825,-0.278309 z");
+}
+
+
+.peopleColumn-1wMU14 {
+    background-color: rgb(0 0 0 / 75%);
+}
+
+div[class^='nowPlayingColumn'] {
+    background-color: rgb(0 0 0 / 75%);
+}
+
+.container-ZMc96U.themed-Hp1KC_ {
+    background: rgb(0 0 0 / 75%);
+}
+
+.theme-dark .root-g14mjS {
+    background-color: #0000009f;
+}
+
+
+.theme-dark .footerSeparator-VzAYwb {
+    background-color: #0000009f;
+}
