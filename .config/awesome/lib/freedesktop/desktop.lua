@@ -224,11 +224,18 @@ end
 
 -- Adds subdirectories and files icons from args.dir
 -- @param args settings from desktop.add_icons
-function desktop.add_dirs_and_files_icons(args)
-    for _, file in ipairs(desktop.parse_dirs_and_files(args.dir)) do
+function desktop.add_dirs_and_filesicons(args)
+    for , file in ipairs(desktop.parse_dirs_and_files(args.dir)) do
         if file.show then
             local label = args.showlabels and file.filename or nil
-            local onclick = function () awful.spawn(string.format("%s '%s'", args.open_with, file.path)) end
+            local onclick
+            if file.filename:match("%.sh$") then
+                onclick = function () awful.spawn.with_shell(string.format("kitty -e sh '%s'", file.path)) end 
+            elseif file.filename:match("%.[^%.]+$") then
+                onclick = function () awful.spawn("xdg-open " .. file.path) end
+            else
+                onclick = function () awful.spawn(string.format("%s '%s'", args.open_with, file.path)) end
+            end
             desktop.add_single_icon(args, label, file.icon, onclick)
         end
     end

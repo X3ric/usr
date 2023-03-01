@@ -27,7 +27,6 @@ ex ()
 export EDITOR=nvim
 
 alias pacman-update='sudo pacman-mirrors --geoip'
-
 alias start='startx'
 alias ls='lsd'
 #alias ll='ls -l'
