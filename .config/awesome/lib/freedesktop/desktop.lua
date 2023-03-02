@@ -224,8 +224,8 @@ end
 
 -- Adds subdirectories and files icons from args.dir
 -- @param args settings from desktop.add_icons
-function desktop.add_dirs_and_filesicons(args)
-    for , file in ipairs(desktop.parse_dirs_and_files(args.dir)) do
+function desktop.add_dirs_and_files_icons(args)
+    for _, file in ipairs(desktop.parse_dirs_and_files(args.dir)) do
         if file.show then
             local label = args.showlabels and file.filename or nil
             local onclick

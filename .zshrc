@@ -5,7 +5,7 @@ PS1="%B%{$fg[red]%}[%{$fg[yellow]%}%n%{$fg[green]%}@%{$fg[blue]%}%M %{$fg[magent
 eval $(thefuck --alias)
 
 PATH="$PATH:/$HOME/.bin"
-PATH="$PATH:/$HOME/.local/.bin"
+PATH="$PATH:/$HOME/.local/bin"
 
 # Custom Variables
 EDITOR=nvim
