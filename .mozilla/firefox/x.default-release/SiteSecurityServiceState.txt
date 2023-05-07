@@ -1,0 +1,5 @@
+contile.services.mozilla.com	0	19605	1725457414179,1,0
+firefox.settings.services.mozilla.com	0	19605	1725457414350,1,0
+greasyfork.org	0	19605	1725457415561,1,0
+sleazyfork.org	0	19605	1725457415481,1,0
+incoming.telemetry.mozilla.org	0	19605	1725457414270,1,0

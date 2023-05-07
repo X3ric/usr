@@ -1,0 +1,1053 @@
+# Zsh 
+nyack() { # command not found handler Dependency from "fzf,thefuck"
+    if command -v "$1" &>/dev/null; then
+        echo "Command $1 is already installed."
+    else
+        echo "Command $1 not found. Do you want to install $1?"
+        local options=("Install" "Skip" "Fix")
+        local install_choice=$(printf '%s\n' "${options[@]}" | fzf-splitted)
+        if [[ "$install_choice" == "Skip" ]]; then
+            echo "Command not installed. Skipping execution."
+            return 1
+        elif [[ "$install_choice" == "Fuck" ]]; then
+            echo "Using 'fuck' to correct your typo..."
+            fuck
+            return $?
+        elif [[ "$install_choice" == "Install" ]]; then
+            echo -e "Using 'instance' to execute the command in an instance ...\nctrl+c to quit without uninstalling"
+            if yay -S "$1"; then
+                echo "Command $1 has been installed." && pacman -Qi "$1" | grep -v 'None'
+                "$@"
+                local exit_code=$?
+                if yay -Rns "$1"; then
+                    echo "Command $1 has been uninstalled after running in instance mode."
+                else
+                    echo "Uninstallation after instance mode failed. Please check if the package is still available."
+                fi
+                return $exit_code
+            else
+                echo "Installation failed. Please check if the package is available."
+                return 1
+            fi
+        fi
+    fi
+}
+plugins() { # $HOME/.config/zsh/plugins scan of .zsh plugins and source in zshrc
+    local plugins_dir="$HOME/.config/zsh/Plugins"
+    local available_plugins=("$plugins_dir"/*.zsh(N^/)) ##local available_plugins=("$plugins_dir"/*.zsh(N))##also subfolders
+    local active_plugins=()
+    while read -r line; do
+        if [[ $line == "source $plugins_dir/"* ]]; then
+        local plugin_name="${line##*/}"
+        plugin_name="${plugin_name%.zsh}"
+        active_plugins+=("$plugin_name (enabled)")
+        fi
+    done < "$HOME/.zshrc"
+    for plugin_file in "${available_plugins[@]}"; do
+        local plugin_name="${plugin_file##*/}"
+        plugin_name="${plugin_name%.zsh}"
+        if ! printf '%s\n' "${active_plugins[@]}" | grep -q "^$plugin_name"; then
+        active_plugins+=("$plugin_name (disabled)")
+        fi
+    done
+    local selected_plugins=$(printf '%s\n' "${active_plugins[@]}" | fzf-splitted)
+    if [[ -n "$selected_plugins" ]]; then
+        printf '%s\n' "$selected_plugins" | while read -r plugin_str; do
+        local plugin_name="${plugin_str%% *}"
+        if [[ $plugin_str == *"(disabled)" ]]; then
+            echo "source $plugins_dir/$plugin_name.zsh" >> "$HOME/.zshrc"
+        else
+            grep -v "source $plugins_dir/$plugin_name.zsh" "$HOME/.zshrc" > "$HOME/.zshrc.tmp" && mv -f "$HOME/.zshrc.tmp" "$HOME/.zshrc"
+        fi
+        done
+        clear
+        exec zsh
+    fi
+}
+# Alias replaced
+manx() { # make man on exit displays cheat.sh
+    command="$1"
+    \man "$command" && cheat "$command"
+}
+lfx() { # makes lf enter in the current dir on enter
+    local last_dir_path=~/.last_lf_dir
+    \lf -last-dir-path="$last_dir_path" "$@"
+    [ -f "$last_dir_path" ] && export lastlfdir="$(cat "$last_dir_path")" && cd "$lastlfdir" && rm "$last_dir_path"
+}
+# Systemd 
+autologin() { # Toggle systemd autologin for the currend user in tty1
+    if [[ "$1" == "info" ]]; then
+        local tty_number="1"
+        local service_file="/etc/systemd/system/getty@tty${tty_number}.service.d/autologin.conf"
+        if [[ -f "$service_file" ]]; then
+            echo "Auto-login enabled"
+        else
+            echo "Auto-login disabled"
+        fi
+    else
+        local tty_number="1"
+        local service_dir="/etc/systemd/system/getty@tty${tty_number}.service.d"
+        local service_file="$service_dir/autologin.conf"
+        local current_user=$(whoami)
+        if [[ -f "$service_file" ]]; then
+            sudo rm "$service_file" && \
+            sudo systemctl daemon-reload && \
+            echo "Auto-login disabled for tty${tty_number}"
+        else
+            if [[ ! -d "$service_dir" ]]; then
+                sudo mkdir -p "$service_dir"
+            fi
+            echo -e "[Service]\nExecStart=\nExecStart=-/sbin/agetty --autologin $current_user --noclear %I \$TERM" | sudo tee "$service_file" > /dev/null
+            sudo systemctl daemon-reload && \
+            echo "Auto-login enabled for tty${tty_number} with user $current_user"
+        fi
+    fi
+}
+logintty () { # Switch user only if autologin is disabled
+    local tty_number="1" 
+    local service_dir="/etc/systemd/system/getty@tty${tty_number}.service.d" 
+    local service_file="$service_dir/autologin.conf" 
+    local current_user=$(whoami) 
+    if [[ -f "$service_file" ]]; then
+        notify-send "disable Auto-login for tty${tty_number} to continue"
+    else
+        loginctl kill-session $XDG_SESSION_ID
+    fi
+}
+# Xorg
+setwm() { # Xorg initrc sed last line "exec" to be "exec '$WM'"
+    program_name="$1"
+    xinitrc_file="/etc/X11/xinit/xinitrc"
+    sudo sed -i '/^while true; do$/d;/^done$/d' "$xinitrc_file"
+    if [[ $program_name == "dwm" ]]; then
+        if sudo sed -i "\$s|^exec.*|while true; do\nexec $program_name 2> ~/.dwm.log\ndone|" "$xinitrc_file"; then
+            echo "Loop logic added and last 'exec' line updated to run $program_name in $xinitrc_file"
+        else
+            echo "Failed to update $program_name in $xinitrc_file"
+        fi
+    else
+        if sudo sed -i "\$s|^exec.*|exec $program_name|" "$xinitrc_file"; then
+            echo "Last 'exec' line updated to run $program_name in $xinitrc_file"
+        else
+            echo "No 'exec' line found in $xinitrc_file"
+        fi
+    fi
+}
+start() { # Simply makes you can start X with start $WM like "start awesome"
+    if [[ -z $1 ]]; then
+        startx
+    else
+        setwm "$1" && startx
+    fi
+}
+xrandr-set() { # Xrandr permanent set for X in etc/X11/xinit/xinitrc
+    arg=$1
+    if [ -z "$arg" ]; then
+        echo -n 'Screen size XxY: '
+        read screensize
+        echo -n 'Refresh rate (Hz): '
+        read refresh_rate
+        display=$(xrandr | awk '/ connected/ {print $1; exit}')
+        sudo sed -i "/xrandr/c\xrandr --output $display --primary --mode $screensize --rate $refresh_rate --pos 0x0 --rotate normal" "/etc/X11/xinit/xinitrc"
+        xrandr --output $display --primary --mode $screensize --rate $refresh_rate --pos 0x0 --rotate normal
+    else
+        $arg+=""
+        sudo sed -i "/xrandr/c\xrandr $arg" "/etc/X11/xinit/xinitrc"
+    fi
+}
+# Utils
+fzf-splitted () { # fzf splitted view adaptation for tmux
+    if [[ -n "$TMUX" ]]; then 
+     fzf --reverse --ansi "$@"
+    else 
+     fzf-tmux -x --height ${FZF_TMUX_HEIGHT:-40%} --reverse --ansi "$@"
+    fi 
+}
+pacman-log() { # pacman logs like history of installed
+    local usage="Usage: pacman-log [OPTIONS]\n Options:
+    -i, --install    Show only install logs.
+    -r, --remove     Show only remove logs.
+    -m               Show in inverted order.
+    -h, --help       Display this help message."
+    local log_file="/var/log/pacman.log"
+    local install_logs=""
+    local remove_logs=""
+    local order_logs=""
+    if [[ ! -f "$log_file" ]]; then
+        echo "Error: pacman.log file not found at /var/log/pacman.log"
+        return 1
+    fi
+    while (( $# > 0 )); do
+        case "$1" in
+        -m) order_logs="true" ;;
+        -i|--install) install_logs="installed" ;;
+        -r|--remove) remove_logs="removed" ;;
+        -ri) install_logs="installed" ; remove_logs="removed" ;;
+        -rim) install_logs="installed" ; remove_logs="removed" ; order_logs="true" ;;
+        -rm|-mr) install_logs="installed" ; remove_logs="removed" ; order_logs="true" ;;
+        -im|-mi) install_logs="installed" ; remove_logs="removed" ; order_logs="true" ;;
+        -h|--help)
+            echo -e "$usage"
+            return 0
+            ;;
+        *)
+            echo "Error: Unknown option: $1"
+            echo -e "$usage"
+            return 1
+            ;;
+        esac
+        shift
+    done
+    local log_filter=""
+    if [[ -n "$install_logs" && -n "$remove_logs" ]]; then
+        log_filter="grep -E '\\[(PACMAN|ALPM)\\] (installed|removed)' \"$log_file\""
+    elif [[ -n "$install_logs" ]]; then
+        log_filter="grep -E '\\[(PACMAN|ALPM)\\] (installed)' \"$log_file\""
+    elif [[ -n "$remove_logs" ]]; then
+        log_filter="grep -E '\\[(PACMAN|ALPM)\\] (removed)' \"$log_file\""
+    else
+        echo -e "$usage"
+        return 1
+    fi
+    local final_cmd="$log_filter | highlight -S sh"
+    if [[ -n "$order_logs" ]]; then
+        final_cmd+=" | tac"
+    fi
+    eval "$final_cmd | bat --plain"
+}
+desktop-exec() { # .desktop file runner
+    if [ $# -eq 0 ]; then
+        echo "Usage: $0 /path/to/your.desktop"
+        exit 1
+    fi
+    desktop_file="$1"
+    exec_command=$(grep -m 1 "^Exec=" "$desktop_file" | sed 's/^Exec=//')
+    eval $exec_command
+}
+drun() { # run commands on file/dir size change
+    [ -z "$1" ] && { echo "Usage: drun <command> [file/directory]"; return 1; }
+    local cmd="$1"
+    local target="${2:-$PWD}"
+    [ ! -e "$target" ] && { echo "Error: File or directory '$target' not found."; return 1; }
+    echo "Monitoring size of '$target' for changes..."
+    local prev_size=$(du -sb "$target" | awk '{print $1}')
+    while sleep 1; do
+        local size=$(du -sb "$target" | awk '{print $1}')
+        if [ "$prev_size" -ne "$size" ]; then
+        prev_size="$size"
+        zsh -ci $cmd
+        fi 
+    done
+}
+qrscan() { # qr code scanner using zbar and scrot
+    if command -v zbarimg &> /dev/null; then 
+        scrot -l  mode=edge,style=dash,width=1,opacity=100 -s $HOME/.cache/qr.png
+        local url=$(zbarimg --raw --quiet $HOME/.cache/qr.png)
+        rm $HOME/.cache/qr.png
+        if [ -n "$url" ]; then
+            echo "QR-Code ⤵\n$url"
+            xdg-open "$url" &>/dev/null
+        else
+            echo "No QR code found"
+        fi
+    else
+        sudo pacman -Sy --noconfirm zbar
+        echo "Rerun to use"
+        zsh
+    fi
+
+}
+qrgen() { # qr code link generator
+    if [ -z "$1" ]; then 
+        echo "Usage: qrgen <text_or_url>" 
+        return 1 
+    fi  
+    local input="$1" 
+    local api_url="https://qrenco.de/$input"  
+    curl -s $api_url || echo "Failed to generate QR Code."
+}  
+picom-toggle() { # Toggle picom
+    if pgrep -x "picom" > /dev/null
+    then
+        killall picom
+    else
+        picom -b --config  $HOME/.config/picom/picom.conf
+    fi
+}
+imagelistmd() { # cwd markdown images formatter
+    output_file="IMAGES.md"
+    image_files=$(find . -maxdepth 2 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \))
+    {
+        echo "### Images"
+        subdirs=()
+        while IFS= read -r image_file; do
+            subdir=$(dirname "$image_file")
+            subdir="${subdir#./}" # Remove the "./" prefix
+            if [[ ! " ${subdirs[@]} " =~ " ${subdir} " ]]; then
+                subdirs+=("$subdir")
+            fi
+        done <<< "$image_files"
+        for subdir in "${subdirs[@]}"; do
+            echo "<details>"
+            echo "<summary>$subdir</summary>"
+            echo ""
+            echo "<p>"
+            find "$subdir" -maxdepth 1 -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" \) -print0 | while IFS= read -r -d '' image_file; do
+                filename=$(basename "$image_file")
+                size=$(stat -c%s "$image_file")
+                dimensions=$(identify -format "%wx%h" "$image_file")
+                echo "<details>"
+                echo "<summary>${filename%.*}</summary>"
+                echo ""
+                echo "<img src=\"$image_file\" alt=\"$filename\">"
+                echo ""
+                echo "<table>"
+                echo "<tr><th>Size (bytes)</th><th>Dimensions (pixels)</th><th>Name</th></tr>"
+                echo "<tr><td>$size</td><td>$dimensions</td><td>$filename</td></tr>"
+                echo "</table>"
+                echo ""
+                echo "</details>"
+            done
+            echo "</p>"
+            echo ""
+            echo "</details>"
+            echo ""
+        done
+    } > "$output_file"
+    echo "Markdown file generated successfully at $output_file."
+}
+ytm-dl() { # Youtube music/playlist downloader in ./Music and also thumbnails depends from yt-dlp
+    cd ~/Music
+    if [ -z "$1" ]; then
+      echo "Provide a YouTube link : "
+      read -r link
+    else
+      link="$1"
+    fi
+    echo "Downloading audio with embedded thumbnail..."
+    yt-dlp --embed-thumbnail --extract-audio --audio-format mp3 --ignore-config --yes-playlist --no-part --no-warnings -o "%(title)s.%(ext)s" "$link"
+    echo "Done!"
+}
+cheat() { # Comunity driven cheatsheet for linux commands
+    for arg in "$@"; do 
+    if [[ ! "$@" = /* ]]; then  
+        arg="/$@"  
+    else  
+        arg="$@"  
+    fi  
+    curl -sS cheat.sh$arg | clearcolors | highlight -S sh | bat --file-name "cheat.sh$arg"
+    done
+} 
+inputpaste() { # simulating keybord input to type copied "force paste"
+    setxkbmap us -option caps:none
+    xdotool type "$(xclip -o)" && sleep 1
+    trap "setxkbmap $LAYOUT -option caps:none" 0
+}
+screenshot() { # make a screenshot
+    if [ ! -d "$HOME/Pictures/Screenshots" ]; then
+        mkdir -p "$HOME/Pictures/Screenshots"
+    fi
+    cd $HOME/Pictures/Screenshots
+    scrot 'Arch-%Y-%m-%d-%s_screenshot_$wx$h.jpg' -e 'notify-send 'Screenshot' $f && timeout 0.5 feh --title Preview --scale-down -s $f' 
+    LASTSCREENSHOT=$(ls -t1 | head -n 1)
+    xclip -selection clipboard -t image/png -i $LASTSCREENSHOT 
+}
+screencrop() { # make a crop img of the screen
+    if [ ! -d "$HOME/Pictures/Screenshots" ]; then
+        mkdir -p "$HOME/Pictures/Screenshots"
+    fi
+    mkdir $HOME/Pictures/Screenshots
+    cd $HOME/Pictures/Screenshots
+    scrot -l  mode=edge,style=dash,width=1,opacity=100 -s 'Arch-%Y-%m-%d-%s_screencrop_$wx$h.jpg' -e 'notify-send 'Screenshot' $f && timeout 0.5 feh --title Preview --scale-down -s $f' 
+    LASTSCREENSHOT=$(ls -t1 | head -n 1)
+    xclip -selection clipboard -t image/png -i $LASTSCREENSHOT 
+}
+record() { # ffmpeg video recorder
+    notify-send "Pick region" "and drag"
+    timestamp=$(date "+%Y%m%d_%H%M%S")
+    resolution=$(slop -f "%wx%h")
+    notify-send "Recording start" "in 5 seconds"
+    sleep 5
+    echo "Press Q to save and quit. Press Ctrl+C to only quit."
+    ffmpeg -f x11grab -s $resolution -i $DISPLAY -preset ultrafast -qp 0 -y ~/Videos/$timestamp.mp4
+    notify-send "Recording finished" "Saved in ~/Videos/$timestamp.mp4"
+}
+videowal() { # Xorg root wallpaper video mpv and fzf to select Video in $HOME/Videos
+    local videos=($(find "$HOME/Videos" -maxdepth 3 -type f -iregex '.*\.\(webm\|mp4\)' | sort ))
+    if command -v xwrap &>/dev/null; then
+    videos+=("Quit")
+    else
+    videos+=("Install")
+    fi
+    local selected_video=$(printf '%s\n' "${videos[@]}" | fzf-splitted)
+    if [[ "$videos" == "Quit" ]]; then
+        pkill -f "mpv"
+    elif [[ "$videos" == "Install" ]]; then
+        sudo pacman --noconfirm -S libx11
+        cd $HOME/.local/share/bin/xwrap
+        make
+        sudo make install
+        echo "Rerun to use."
+        zsh
+    else
+        if command -v xwrap &>/dev/null; then
+            pkill -f "mpv"
+            nohup xwrap -o 1.0 -nf -ovr -- mpv -wid WID --loop-file=inf --video-unscaled --no-terminal --no-audio --no-input-default-bindings --no-border --no-window-dragging --no-osc --no-osd-bar "$selected_video" &
+        fi
+    fi
+}
+imagerotate() { # Imagemagick image rotate
+    local image_file="$1"
+    local rotate_degree=0
+    local rotate_step=90
+    local temp_file="$image_file-temp"
+    local base_name="${image_file%.*}"
+    local extension="${image_file##*.}"
+    cp "$image_file" "$temp_file"
+    while true; do
+        render "$temp_file"
+        echo "Use '+' to increase hue, '-' to decrease hue."
+        echo "Press 'Enter' or 'q' to save and exit."
+        read -rsk1 input
+        if [[ "$input" == "+" ]]; then
+            ((rotate_degree += rotate_step))
+            convert "$temp_file" -rotate $rotate_step "$temp_file"
+        elif [[ "$input" == "-" ]]; then
+            ((rotate_degree -= rotate_step))
+            convert "$temp_file" -rotate -$rotate_step "$temp_file"
+        elif [[ "$input" == "q" || "$input" == $'\e' ]]; then
+            cp "$temp_file" "$base_name-degree${rotate_degree}.$extension"
+            break
+        fi
+    done
+    rm -vI -f "$temp_file"
+}
+imagehue() { # Imagemagick image hue shifter
+    local image_file="$1"
+    local hue_shift=0
+    local hue_step=5
+    local temp_file="temp_$image_file"
+    local base_name="${image_file%.*}"
+    local extension="${image_file##*.}"
+    while true; do
+        convert "$image_file" -modulate 100,100,$((100 + hue_shift)) "$temp_file"
+        render "$temp_file"
+        echo "Use '+' to increase hue, '-' to decrease hue."
+        echo "Press 'Enter' or 'q' to save and exit."
+        read -rsk1 input
+        case "$input" in
+            "+") ((hue_shift += hue_step)) ;;
+            "-") ((hue_shift -= hue_step)) ;;
+            $'\n' | "q" | $'\e') cp "$temp_file" "$base_name-hue${hue_shift}.$extension"; break ;;
+        esac
+    done
+    rm "$temp_file"
+}
+imageresize() { # Imagemagick image resize
+    if [ $# -ne 3 ]; then
+        echo "Usage: xresize <input-file> <width> <height>"
+        return 1
+    fi
+    local input_file="$1"
+    local width="$2"
+    local height="$3"
+    local file_extension="${input_file##*.}"
+    local output_file="${input_file%.*}${width}x${height}.${file_extension}"
+    local lowercase_file_extension="$(echo "$file_extension" | tr '[:upper:]' '[:lower:]')"
+    if [[ "${lowercase_file_extension}" =~ ^(jpg|jpeg|png)$ ]]; then
+        convert "${input_file}" -resize "${width}x${height}" "${output_file}"
+        echo "Resized ${input_file} to ${output_file}"
+    else
+        echo "Invalid file extension. Supported formats: jpg, jpeg, png"
+        return 1
+    fi
+}
+explain() { # universal explainer
+    local name=$1
+    al="$HOME/.config/zsh/aliasrc"
+    fn="$HOME/.config/zsh/funcrc"
+    def=$(declare -f $name)
+    if [[ -z "$1" ]]; then # if no argument prewiev zshconf
+        cat "$al" | highlight -S sh | bat --style=grid,header --file-name $al
+        cat "$fn" | highlight -S sh | bat --style=grid,header --file-name $fn
+        return 1
+    else    
+        case "$(whence -w $name)" in
+            *"alias"*)
+                if [[ -n "$def" ]]; then
+                    echo $def | highlight -S sh | bat --style=grid,header,snip --file-name "$(type -a $name | sed '2!d' | cut -d " " -f 7)"
+                fi
+                alias="$(alias $name | sed "s/['\"]//g" | cut -d "=" -f 2)"
+                type -a $name | sed '1!d'
+                if [[ "$(echo $alias | cut -d '|' -f 1 | cut -d ' ' -f 1)" == *"sudo"* ]]; then
+                    namenext="$(echo $alias | cut -d '|' -f 1 | cut -d ' ' -f 2 )"
+                else
+                    namenext="$(echo $alias | cut -d '|' -f 1 | cut -d ' ' -f 1 )"         
+                fi
+                if [[ $namenext != $name ]]; then
+                    explain $namenext
+                fi
+                if [[ "$(whence -w $namenext)" != *"builtin"* ]]&&[[ "$(alias $name | cut -d '|' -f 1 | cut -d ' ' -f 1)" != *"sudo"* ]]&&[[ "$(alias $name)" != *"|"* ]]; then
+                    complexity="$(type -a $name | wc -l)"
+                    type -a $name | sed ''$complexity'!d'
+                fi 
+                if [[ $namenext != $name ]] && [[ "$(alias $name)" == *"|"* ]]; then
+                    explain "$(alias $name | sed "s/['\"]//g" | cut -d "=" -f 2 | cut -d '|' -f 2 | cut -d ' ' -f 2)"
+                fi
+                ;;
+            *"command"*|*"builtin"*)
+                type -a $name 
+                ;;
+            *"function"*)
+                desc=$(sed -n "/^[[:space:]]*$name() { #/{s/^[[:space:]]*$name() { #[[:space:]]*//;p;q;}" "$fn")
+                if [[ -n "$def" ]]; then
+                    echo $def | highlight -S sh | bat --style=grid,header,snip --file-name "$fn Comment: $desc"
+                fi
+                ;;
+            *)
+                echo -e "$name not found"
+                return 1
+                ;;
+        esac
+    fi  
+}
+pacman-list() { # list system packages aur/pacman
+    case "$1" in
+        -p)
+            pacman -Qen | bat --file-name "Pacman packages"
+            o=$(pacman -Qen | wc -l)
+            echo -e "Official : $o"
+            d=$(pacman -Qd | wc -l)
+            echo -e " Dependency : $d"
+            ;;
+        -a)
+            pacman -Qem | bat --file-name "AUR packages"
+            a=$(pacman -Qem | wc -l)
+            echo -e "AUR : $a"
+            ad=$(pacman -Qdm | wc -l)
+            echo -e " Dependency : $ad"
+            ;;
+        -pa|-ap)
+            pacman -Qe | bat --file-name "Aur/Pacman packages"
+            all=$(pacman -Q | wc -l)
+            echo -e "All : $all"
+            d=$(pacman -Qd | wc -l)
+            echo -e " Dependency : $d"
+            o=$(pacman -Qen | wc -l)
+            echo -e "Official : $o"
+            ad=$(pacman -Qdm | wc -l)
+            echo -e " Dependency : $ad"
+            a=$(pacman -Qem | wc -l)
+            echo -e "AUR : $a"
+            od=$(pacman -Qdn | wc -l)
+            echo -e " Dependency : $od"
+            ;;
+        -h|--help)
+            echo "Usage: pacman-list [OPTION]"
+            echo "Options:"
+            echo "  -p         List official (pacman) packages"
+            echo "  -a         List AUR packages"
+            echo "  -pa        List both official and AUR packages"
+            echo "  -h, --help Show this help message"
+            ;;
+        *)
+            echo "Invalid option. Use '-h' or '--help' for more information."
+            ;;
+    esac
+}
+ex() { # Universal archive extractor
+    if [ -f $1 ] ; then
+        case $1 in
+        *.tar.bz2)   tar xjf $1   ;;
+        *.tar.gz)    tar xzf $1   ;;
+        *.tar.xz)    tar xJf $1   ;;
+        *.bz2)       bunzip2 $1   ;;
+        *.rar)       unrar x $1   ;;
+        *.gz)        gunzip $1    ;;
+        *.tar)       tar xf $1    ;;
+        *.tbz2)      tar xjf $1   ;;
+        *.tgz)       tar xzf $1   ;;
+        *.zip)       unzip $1     ;;
+        *.Z)         uncompress $1;;
+        *.7z)        7z x $1      ;;
+        *)           echo "'$1' cannot be extracted via ex()" ;;
+        esac
+    else
+        echo "'$1' is not a valid file"
+    fi
+}
+color() { # pipe to ansi color text
+    local input
+    read input
+    local color_code
+    if [[ $1 =~ ^[0-9]+$ ]]; then
+        color_code=$1
+    else
+        case "$1" in
+            black) color_code=0 ;;
+            red) color_code=1 ;;
+            green) color_code=2 ;;
+            yellow) color_code=3 ;;
+            blue) color_code=4 ;;
+            magenta) color_code=5 ;;
+            cyan) color_code=6 ;;
+            white) color_code=7 ;;
+            *) color_code=7 ;;
+        esac
+        color_code=$((color_code + 30))
+    fi
+    echo -e "\033[${color_code}m${input}\033[0m"
+}
+colortest() { # Color palette info
+    if [[ $# -eq 0 ]]; then
+        T='Text'
+    fi 
+    if [[ -n "$1" ]]; then
+        T="$1"
+    fi
+    echo -e "\n  16-Color Mode:\n"
+    echo -e "                   40m     41m     42m     43m     44m     45m     46m     47m"
+    for FGs in '    m' '   1m' '  30m' '1;30m' '  31m' '1;31m' '  32m' '1;32m' '  33m' '1;33m' '  34m' '1;34m' '  35m' '1;35m' '  36m' '1;36m' '  37m' '1;37m';
+    do
+        FG=${FGs// /}
+        echo -en " $FGs \033[$FG  $T  "
+        for BG in 40m 41m 42m 43m 44m 45m 46m 47m;
+        do
+            echo -en "\033[$FG\033[$BG  $T  \033[0m"
+        done
+        echo
+    done
+    echo -e "\n  256-Color Mode:\n"
+    for i in {0..255}; do
+        if [[ -n "$1" ]]; then
+            print -Pn " %F{$i}${(l:4::0:)1}%f "
+        else
+            print -Pn " %F{$i}${(l:4::0:)i}%f "
+        fi
+        if ((i % 16 == 15)); then
+            echo
+        fi
+    done
+}
+render() { # Render images in the terminal
+    display_info=false
+    if [[ $# -eq 0 ]]; then
+        echo "Usage: render [-i | --info] <image_file1> <image_file2> ..."
+        return 1
+    fi
+    if [[ $1 == "-i" ]] || [[ $1 == "--info" ]]; then
+        display_info=true
+        shift
+    fi
+    for image_file in "$@"; do
+        local image_file=$(realpath $image_file)
+        if $display_info; then
+            file_size_bytes=$(du -b "$image_file" | cut -f1)
+            file_size_kb=$((file_size_bytes / 1024))
+            dimensions=$(identify -format "%wx%h" "$image_file" 2>/dev/null)
+            echo "\033[1;36m$image_file \033[1;33m[$file_size_kb KB]\033[1;32m [$dimensions]\033[0m"
+        fi
+        if [[ "$TERM" == "tty" ]]; then
+            chafa --stretch -C on $image_file
+        elif [[ "$TERM" == "kitty" ]]; then
+            icat "$image_file"
+            #kitty @ --to $KITTY_LISTEN_ON set-background-image
+        else
+            echo '{"action": "add", "x": 0, "y": 0, "identifier": "test", "path": "'"$image_file"'"}' | ueberzug layer --parser json
+        fi
+    done
+    if [[ ! -f "$image_file" ]]; then
+        echo "Error: File '$image_file' not found."
+        return 1
+    fi
+}
+copy() { # copy dirs/files to paste in other dir
+  local display_list=false
+  local clear_list=false
+  while getopts ":lch" opt; do
+    case $opt in
+      l)
+        display_list=true
+        ;;
+      c)
+        clear_list=true
+        ;;
+      h)
+        echo "Usage: copy [-l] [-c] [files/directories...]"
+        echo "Options:"
+        echo "  -l    Display the list of previously copied items"
+        echo "  -c    Clear the list of copied items"
+        echo "  -h    Show this help message"
+        return 0
+        ;;
+      ?)
+        echo "Invalid option: -$OPTARG"
+        return 1
+        ;;
+    esac
+  done
+  shift $((OPTIND -1))
+  if $display_list; then
+    if [[ ${#copied[@]} -eq 0 ]]; then
+      echo "No items have been copied yet."
+    else
+      echo "Previously copied items:"
+      printf '%s\n' "${copied[@]}"
+    fi
+    return 0
+  fi
+  if $clear_list; then
+    copied=()
+    echo "Cleared the list of copied items."
+    return 0
+  fi
+  if [[ $# -eq 0 ]]; then
+    local selected_items=$(ls -A | fzf-splitted --multi)
+    if [[ -n $selected_items ]]; then
+      while IFS= read -r item; do
+        local source=$(realpath "$item")
+        if [[ -e $source ]]; then
+          copied+=("$source")
+          echo "Copied: $source"
+          echo -n "$source" | xclip -selection clipboard
+        else
+          echo "The specified path does not exist: $source"
+        fi
+      done <<< "$selected_items"
+    fi
+    return 0
+  fi
+  while [[ $# -gt 0 ]]; do
+    local source=$(realpath "$1")
+    if [[ ! -e $source ]]; then
+      echo "The specified path does not exist: $source"
+    else
+      copied+=("$source")
+      echo "Copied: $source"
+      echo -n "$source" | xclip -selection clipboard
+    fi
+
+    shift
+  done
+}
+paste() { # paste copied dirs/files in other dir
+  local destination=$PWD
+  local move=false
+  if ! command -v fzf &> /dev/null; then
+    echo "fzf is required but not installed. Aborting."
+    return 1
+  fi
+  while getopts ":mhd:" opt; do
+    case $opt in
+      m)
+        move=true
+        ;;
+      h)
+        echo "Usage: paste [-m] [-h] [-d destination_directory]"
+        echo "Options:"
+        echo "  -m    Move (cut) the copied items instead of copying"
+        echo "  -h    Show this help message"
+        echo "  -d    Specify the destination directory"
+        return 0
+        ;;
+      d)
+        destination="$OPTARG"
+        ;;
+      ?)
+        echo "Invalid option: -$OPTARG"
+        return 1
+        ;;
+    esac
+  done
+  shift $((OPTIND -1))
+  if [[ ${#copied[@]} -eq 0 ]]; then
+    echo "No items have been copied yet."
+    return 1
+  fi
+  selected_items=$(printf "%s\n" "${copied[@]}" | fzf-splitted --multi)
+  if [[ -z "$selected_items" ]]; then
+    echo "No items selected. Aborting."
+    return 1
+  fi
+  if [[ $# -gt 0 ]]; then
+    destination="$1"
+    shift
+  fi
+  if [[ ! -d $destination ]]; then
+    echo "The destination path is not a valid directory: $destination"
+    return 1
+  fi
+  while read -r item; do
+    if $move; then
+      if [[ -e $item ]]; then
+        mv -f "$item" "$destination" 2>/dev/null
+        echo "Moved: $item to $destination"
+      fi
+    else
+      if [[ -e $item ]]; then
+        cp -rf "$(realpath "$item")" "$destination" 2>/dev/null
+        echo "Copied: $item to $destination"
+      fi
+    fi
+    copied=("${copied[@]/$item}")
+  done <<< "$selected_items"
+}
+ppip() { # Pacman pip to install pip pkg via pacman/aur
+    if [ "$#" -ge 1 ]; then
+        for pkg in "${@:1}"; do
+            yay -S "python-$pkg"
+        done
+    else
+        echo "Usage: ppip <package_names>"
+    fi
+}
+bookmarks() { # Bookmarks menu select marks
+    CacheFile="${XDG_CACHE_HOME:-$HOME/.cache}/bookmarks.cache"
+    current_user=$(whoami)
+    sed -i "s|\$HOME|/home/$(whoami)|g" "$HOME/.cache/bookmarks.cache"
+    selected=$(cat "$CacheFile" | sed "s|^$HOME|/home/$current_user|g" | fzf-splitted)
+    if [ -n "$selected" ]; then
+        if [ -d "$selected" ]; then
+            cd "$selected" || exit 1
+        else
+            xdg-open "$selected"
+        fi
+    fi
+}
+bookmark() { # make dir/file marked
+    CacheFile="${XDG_CACHE_HOME:-$HOME/.cache}/bookmarks.cache"
+    local path
+    if [ -z "$@" ]; then
+        path=$(pwd)
+    else
+        path=$1
+    fi
+    if [ -e "$path" ]; then
+        echo -e "$path\n" >> "$CacheFile"
+        echo "Added '$path' to bookmarks."
+    else
+        echo "Error: '$path' does not exist."
+    fi
+}
+conf() { # config folder cd
+    local x="$HOME/.config"
+    local path="$x/$@"
+    if [ -d "$path" ]; then
+        cd "$path"
+    else
+        echo "Path does not exist: $path"
+        return 1
+    fi
+}
+walscrape() { # Wallpaper scraper
+display_help() {
+cat <<EOF
+Usage: walscrape [options] search_query
+
+Options:
+  -categories=N           Set the category (e.g., -categories 100)
+  -purity=N               Set the purity (e.g., -purity 111)
+  -sorting=type           Set the sorting type (e.g., -sorting date_added, relevance, random, views, favorites, toplist)
+  -order=type             Set the sorting order (e.g., -order desc, asc)
+  -topRange=type          Set the top range (e.g., -topRange 1d, 3d, 1w, 1M, 3M, 6M, 1y)
+  -resolution=res         Set the resolution (e.g., -resolution 1920x1080,1920x1200)
+  -ratios=ratio           Set the ratios (e.g., -ratios 16x9,16x10)
+  -colors=colors          Set the colors (e.g., -colors 660000,990000)
+  -page=page_num          Set the starting page number (e.g., -page 1)
+
+Search options:
+  tagname                Search fuzzily for a tag or keyword
+  -tagname               Exclude a tag or keyword
+  +tag1 +tag2            Must have both tag1 and tag2
+  +tag1 -tag2            Must have tag1 and NOT tag2
+  @username              Show user uploads
+  id:123                 Exact tag search (cannot be combined)
+  type:{png/jpg}         Search for a specific file type (e.g., -q mysearch -type:jpg)
+  like:wallpaper ID      Find wallpapers with similar tags
+
+Categories:
+  100                    General
+  101                    Anime
+  111                    People
+
+Purity options:
+  100                    SFW (Safe For Work)
+  110                    Sketchy
+  111                    NSFW (Not Safe For Work, requires a valid API key)
+
+Examples:
+  walscrape -categories 100 -purity 111 mysearch
+  walscrape -sorting relevance -order desc -resolution 1920x1080,1920x1200 landscape
+
+Additional Information:
+  - The search query should be provided as the last argument.
+  - Use 'walscrape -h' to display this help message.
+EOF
+}
+    if [ $# -eq 0 ]; then
+        display_help
+        return 1
+    fi
+    local base_url="https://wallhaven.cc/api/v1/search?"
+    local downloaded_ids_file="$HOME/Pictures/Wallpapers/Wallhaven/downloaded_ids.txt"
+    local download_dir="$HOME/Pictures/Wallpapers/Wallhaven"
+    local search_query=""
+    local categories=""
+    local purity=""
+    local sorting=""
+    local order=""
+    local topRange=""
+    local resolution=""
+    local ratios="landscape"
+    local colors=""
+    local page=1
+    while [[ $# -gt 0 ]]; do
+        local arg="$1"
+        case $arg in
+            -categories|-purity|-sorting|-order|-topRange|-resolution|-ratios|-colors|-page)
+                local var_name="${arg//-/}"
+                local var_value="$2"
+                eval "$var_name=\"$var_value\""
+                shift 2
+                ;;
+            -h)
+                display_help
+                return 0
+                ;;
+            *)
+                if [ -z "$search_query" ]; then
+                    search_query="$arg"
+                else
+                    echo "Unknown argument: $arg"
+                fi
+                shift
+                ;;
+        esac
+    done
+    if [ -z "$search_query" ]; then
+        echo "Search query is required."
+        return 1
+    fi
+    local url="${base_url}q=${search_query}"
+    if [ -n "$categories" ]; then url="${url}&categories=${categories}" fi
+    if [ -n "$purity" ]; then url="${url}&purity=${purity}" fi
+    if [ -n "$sorting" ]; then url="${url}&sorting=${sorting}" fi
+    if [ -n "$order" ]; then url="${url}&order=${order}" fi
+    if [ -n "$topRange" ]; then url="${url}&topRange=${topRange}" fi
+    if [ -n "$resolution" ]; then url="${url}&resolutions=${resolution}" fi
+    if [ -n "$ratios" ]; then url="${url}&ratios=${ratios}" fi
+    if [ -n "$colors" ]; then url="${url}&colors=${colors}" fi
+    local downloaded_ids=($(cat "$downloaded_ids_file" 2>/dev/null))
+    echo "URL: $url"
+    while [ $page -lt 10 ]; do
+        local page_url="${url}&page=${page}"
+        curl -s "$page_url" | jq '.data[].path' | xargs -I{} wget --show-progress -nc -nv -P "$download_dir" {}
+        page=$(( page+1 ));
+    done
+}
+# Awesome
+awesome-theme() { # Search in ~/.config/awesome/themes for themes and set "local chosen_theme ="$THEME"" in ~/.config/awesome/rc.lua
+    local themes=($(ls ~/.config/awesome/themes))
+    local chosen_theme=$(awk -F '"' '/ theme =/ {print $2}' ~/.config/awesome/rc.lua)
+    local theme=$(printf '%s\n' "${themes[@]}" | grep -vx "$chosen_theme" | fzf-splitted)
+    if [[ -n "$theme" ]]; then
+        local theme_path="$HOME/.config/awesome/themes/$theme/theme.lua"
+        if [[ -f "$theme_path" ]]; then
+        awk -i inplace -v t="$theme" '/ theme =/ {gsub(/"[^"]+"/, "\""t"\"")} 1' ~/.config/awesome/rc.lua
+        echo "Theme changed to '$theme'"
+        sleep 1 && awesome-client 'awesome.restart()' > /dev/null 2>&1
+        else
+        echo "Invalid theme: '$theme'"
+        fi
+    fi
+}
+gtkset() { # commant to set gtk accent color
+    COLORS=($(cat ~/.cache/wal/colors))
+    I=4
+    if [ -n "${COLORS[$I]}}" ]; then
+        echo "Accent color of gtk darkarch changed to ${COLORS[$I]}"
+        sed -i "s/@define-color accent #[^;]*;/@define-color accent ${COLORS[$I]};/g" $HOME/.local/share/themes/darkarch/gtk-3.0/gtk.css
+    else
+        echo "No color5 found in colors-kitty.conf"
+    fi
+}
+walset() { # AwesomeWM pywall colors and background
+    local usage="Usage: walset [OPTIONS]\n Options:
+    -c,              Color set.
+    -w,              Wallpaper set.
+    -wc,             Wallpaper and Color set.
+    -h, --help       Display this help message."
+    local e=""
+    local c=""
+    local w=""
+    while (( $# > 0 )); do
+        case "$1" in
+        -e) e="1" ;;
+        -c) c="1" ;;
+        -w) w="1" ;;
+        -wc|-cw) w="1" ; c="1" ;;
+        -h|--help)
+            echo -e "$usage"
+            return 0
+            ;;
+        *)
+            echo "Error: Unknown option: $1"
+            echo -e "$usage"
+            return 1
+            ;;
+        esac
+        shift
+    done
+    local theme=$(awk -F '"' '/ theme =/ {print $2}' ~/.config/awesome/rc.lua)
+    local theme_path="$HOME/.config/awesome/themes/$theme/theme.lua"
+    local wallpaper_current="$(awk -F '"' '/self\.wallpaper/ { print $2 }' "$theme_path")"
+    local wallpapers=("${(@f)$(find "$HOME/.config/awesome/themes/$theme/" "$HOME/Pictures/Wallpapers" -maxdepth 2 -type f -iregex '.*\.\(jpe?g\|png\)' -not -name "$(basename "$wallpaper_current")")}")
+    colorset() {
+        wal -i "$wallpaper_path"
+        local color_values=(
+            "colormain=$(awk 'NR==6' "$palette_path")"
+            "colorurgent=$(awk 'NR==5' "$palette_path")"
+        )
+        local theme_file="$(<"$theme_path")"
+        for color in "${color_values[@]}"; do
+            local color_name="${color%%=*}"
+            local color_value="${color#*=}"
+            theme_file="$(echo "$theme_file" | sed -E "s/^theme\.$color_name.*$/theme.$color_name = '$color_value'/")"
+        done
+        echo "$theme_file" > "$theme_path"
+    }
+    if [[ ${#wallpapers[@]} -eq 0 ]]; then
+        echo "No wallpapers found in $HOME/Pictures/Wallpapers"
+        return 1
+    fi
+    local selection=$(printf '%s\n' "${wallpapers[@]}" | fzf-images )
+    if [[ -z "$selection" ]]; then
+        echo "No wallpaper selected."
+        return 1
+    fi
+    local wallpaper_path="$(realpath "$selection")"
+    local palette_path="$HOME/.cache/wal/colors"
+    if [[ -n "$c" && -n "$w" ]]; then # wallpaper selector to set walpaper and colors in awesomewm and other pywall supported
+        sudo clear
+        sed -i "s|self\.wallpaper =.*|self.wallpaper = \"$wallpaper_path\"|" "$theme_path"
+        colorset
+        papirus-folders-autocolor
+        gtkset
+        sleep 1 && awesome-refresh > /dev/null 2>&1
+        echo "Wallpaper changed to: $selection"
+        return 0
+    elif [[ -n "$c" ]]; then # wallpaper selector to set colors in awesomewm and other pywall supported
+        colorset
+        sleep 1 && awesome-refresh > /dev/null 2>&1
+        return 0
+    elif [[ -n "$w" ]]; then # wallpaper selector to set walpaper in awesomewm and other pywall supported
+        sed -i "s|self\.wallpaper =.*|self.wallpaper = \"$wallpaper_path\"|" "$theme_path"
+        sleep 1 && awesome-refresh > /dev/null 2>&1
+        echo "Wallpaper changed to: $selection"
+        return 0
+    else
+        echo "Error: No options specified. Use -h or --help for usage."
+        echo -e "$usage"
+        return 1
+    fi
+}
