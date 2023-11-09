@@ -1,4 +1,5 @@
 #!/bin/bash
+# Autostarted process
 function run {
   if ! pgrep $1 ;
   then
@@ -7,10 +8,12 @@ function run {
 }
 run mpd
 run nm-applet
-run blueman-applet
 run xfce4-clipman
+run blueman-applet
 run libinput-gestures-setup start
 $HOME/.local/share/bin/mpDris2 & 
+sleep 5 && zsh -ci "archx updates" &
 $HOME/.local/share/bin/globalhud/appmenu.py &
 run picom -b --config  $HOME/.config/picom/picom.conf
 run /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1
+echo 'local widget = require("lib.widgets.bar"); widget.updates:update(true)' | awesome-client &

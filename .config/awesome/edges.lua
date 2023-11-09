@@ -65,8 +65,18 @@ function edges:init(args)
 end
 function tag_line_switch(screen_index, colnum)
     local screen = screen[screen_index]
+    if not screen then
+        print("Screen " .. screen_index .. " does not exist.")
+        return
+    end
     local i = screen.selected_tag.index
-    local tag = (i <= colnum) and screen.tags[i + colnum] or screen.tags[i - colnum]
-    tag:view_only()
+    local tag_count = #screen.tags
+    local new_index = (i <= colnum) and (i + colnum) or (i - colnum)
+    if new_index >= 1 and new_index <= tag_count then
+        local tag = screen.tags[new_index]
+        tag:view_only()
+    else
+        print("Invalid tag index: " .. new_index)
+    end
 end
 return edges

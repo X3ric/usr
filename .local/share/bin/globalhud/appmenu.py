@@ -8,7 +8,6 @@ from dbus.mainloop.glib import DBusGMainLoop
 from utils.service import BUS_NAME
 from utils.service import AppMenuService
 
-
 def run_service():
   AppMenuService()
 
@@ -17,14 +16,12 @@ def run_service():
   except KeyboardInterrupt:
     GLib.MainLoop().quit()
 
-
 def main():
   DBusGMainLoop(set_as_default=True)
   session_bus = dbus.SessionBus()
 
   if not session_bus.name_has_owner(BUS_NAME):
     run_service()
-
 
 if __name__ == "__main__":
   main()

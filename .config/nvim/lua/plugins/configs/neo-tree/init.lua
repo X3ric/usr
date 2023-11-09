@@ -2,6 +2,8 @@ local Util = require("plugins.resources.util")
 local Icons = require("custom.icons")
 
 local config = {
+  enable_git_status = false,
+  enable_diagnostics = true,
   close_if_last_window = true, -- Close Neo-tree if it is the last window left in the tab
   popup_border_style = Util.generate_borderchars("thick", "tl-t-tr-r-bl-b-br-l"),
   sources = {
@@ -9,7 +11,7 @@ local config = {
     "buffers",
     "git_status",
     "diagnostics",
-    "document_symbols",
+    --"document_symbols",
   },
   source_selector = {
     winbar = true, -- toggle to show selector on winbar
@@ -20,18 +22,19 @@ local config = {
       { source = "filesystem", display_name = "󰉓" },
       { source = "buffers", display_name = "󰈙" },
       { source = "git_status", display_name = "" },
-      { source = "document_symbols", display_name = "󱎸" },
+      --{ source = "document_symbols", display_name = "󱎸" },
       { source = "diagnostics", display_name = "󰒡" },
     },
   },
   default_component_configs = {
     indent = {
       indent_size = 2,
-      padding = 0, -- extra padding on left hand side
+      padding = 1, -- extra padding on left hand side
       -- indent guides
       with_markers = true,
       indent_marker = "│",
       last_indent_marker = "└",
+      highlight = "NeoTreeIndentMarker",
       -- expander config, needed for nesting files
       with_expanders = true, -- if nil and file nesting is enabled, will enable expanders
       expander_collapsed = "",
@@ -46,8 +49,14 @@ local config = {
       -- The next two settings are only a fallback, if you use nvim-web-devicons and configure default icons there
       -- then these will never be used.
       default = " ",
+      highlight = "NeoTreeFileIcon"
     },
-    modified = { symbol = "" },
+    modified = { symbol = "" , highlight = "NeoTreeModified", },
+    name = {
+      trailing_slash = false,
+      use_git_status_colors = true,
+      highlight = "NeoTreeFileName",
+    },
     git_status = { symbols = Icons.git },
     diagnostics = { symbols = Icons.diagnostics },
   },
@@ -124,3 +133,5 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
 })
 
 return config
+
+

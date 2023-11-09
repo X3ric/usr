@@ -1,4 +1,5 @@
 #!/bin/bash
+# nmcli wifi menu
 if [[ $EUID -ne 0 ]]; then
     echo "This script requires root privileges. Please run it with sudo."
     exit 1

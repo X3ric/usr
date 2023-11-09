@@ -1,4 +1,5 @@
 #!/bin/bash
+# Awesome Xephyr "Dev"
 Xephyr :3 -ac -screen 1920x1080 &
 XEPHYR_PID=$!
 sleep 0.5

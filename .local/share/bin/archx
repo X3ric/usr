@@ -1,4 +1,5 @@
 #!/bin/bash
+# Archx installer
 function checkwget {
     which wget > /dev/null 2>&1
     if [ "$?" -eq "0" ]; then
@@ -89,6 +90,46 @@ loading_animation() {
         }
       function installwine {
           sudo pacman -S --needed --noconfirm wine winetricks
+          echo "Change in Drives > Show dotfiles = true and in Desktop Integration > Theme = null, WinRt theme > Dark"
+          echo "and apply"
+          winecfg
+          echo "Windows Registry Editor Version 5.00
+
+          [HKEY_CURRENT_USER\Control Panel\Colors]
+          \"ActiveBorder\"=\"1 1 1\"
+          \"ActiveTitle\"=\"255 255 255\"
+          \"AppWorkSpace\"=\"1 1 1\"
+          \"Background\"=\"1 1 1\"
+          \"ButtonAlternateFace\"=\"1 1 1\"
+          \"ButtonAlternativeFace\"=\"1 1 1\"
+          \"ButtonDkShadow\"=\"1 1 1\"
+          \"ButtonFace\"=\"1 1 1\"
+          \"ButtonHilight\"=\"255 255 255\"
+          \"ButtonLight\"=\"255 255 255\"
+          \"ButtonShadow\"=\"1 1 1\"
+          \"ButtonText\"=\"255 255 255\"
+          \"GradientActiveTitle\"=\"1 1 1\"
+          \"GradientInactiveTitle\"=\"1 1 1\"
+          \"GrayText\"=\"255 255 255\"
+          \"Hilight\"=\"255 255 255\"
+          \"HilightText\"=\"1 1 1\"
+          \"HotTrackingColor\"=\"255 255 255\"
+          \"InactiveBorder\"=\"1 1 1\"
+          \"InactiveTitle\"=\"255 255 255\"
+          \"InactiveTitleText\"=\"1 1 1\"
+          \"InfoText\"=\"255 255 255\"
+          \"InfoWindow\"=\"1 1 1\"
+          \"Menu\"=\"1 1 1\"
+          \"MenuBar\"=\"1 1 1\"
+          \"MenuHilight\"=\"255 255 255\"
+          \"MenuText\"=\"255 255 255\"
+          \"Scrollbar\"=\"1 1 1\"
+          \"TitleText\"=\"255 255 255\"
+          \"Window\"=\"1 1 1\"
+          \"WindowFrame\"=\"255 255 255\"
+          \"WindowText\"=\"255 255 255\"" > temp_wine_reg.reg
+          wine regedit temp_wine_reg.reg
+          rm temp_wine_reg.reg
           gpu_type=$(lspci)
           if grep -E "NVIDIA|GeForce" <<< ${gpu_type}; then
               sudo pacman -S --needed --noconfirm nvidia-dkms nvidia-utils lib32-nvidia-utils nvidia-settings vulkan-icd-loader lib32-vulkan-icd-loader
@@ -120,6 +161,8 @@ loading_animation() {
           sudo pacman -S --needed --noconfirm gtk3-print-backends
           sudo pacman -S --needed --noconfirm libcups
           sudo pacman -S --needed --noconfirm system-config-printer
+          sudo systemctl enable cups.service
+          sudo systemctl start cups.service
         }
       # XForks
         function installpicom {
@@ -130,6 +173,24 @@ loading_animation() {
             mkdir -p ctpvx && cd ctpvx && (curl -O https://raw.githubusercontent.com/X3ric/ctpv/master/PKGBUILD && makepkg -si) && cd .. && rm -rf ctpvx
           }
 # ArchX
+  function updates() {
+    git --git-dir=$HOME/.cache/usr/.git fetch --quiet > /dev/null 2>&1
+    if [ $(git --git-dir=$HOME/.cache/usr/.git rev-list HEAD...origin/main --count) -gt 0 ]; then
+      update_message=$(git --git-dir=$HOME/.cache/usr/.git log --pretty=format:%B -1 origin/main)
+      echo "There is an update: $update_message"
+      echo "Update with archx > Update"
+    fi
+  }
+  function updates-notify() {
+      git --git-dir=$HOME/.cache/usr/.git fetch --quiet > /dev/null 2>&1
+      if [ $(git --git-dir=$HOME/.cache/usr/.git rev-list HEAD...origin/main --count) -gt 0 ]; then
+        update_message=$(git --git-dir=$HOME/.cache/usr/.git log --pretty=format:%B -1 origin/main)
+        echo "There is an update:"
+        echo "$update_message"
+        echo "Update with archx > update"
+        notify-send "Git Update Available" "Update with archx > update \n $update_message"
+      fi
+  }
   function updateconfig { # ArchX/usr 
       showlogo
       difffile="$HOME/.cache/archx/diffold-$(date +"%Y%m%d_%H%M%S")"
@@ -140,11 +201,17 @@ loading_animation() {
         echo "[✔]::[Deps]: checking!"
         echo "[✔]::[Deps]: checking awesome!"
         while IFS= read -r package; do
+            if [[ ${package:0:1} == '#' ]]; then
+                continue
+            fi
             sudo pacman -S --noconfirm --needed "$package" 2>&1 | grep -E -v 'up to date|nothing to do' &
             loading_animation $! "$package"
         done < <(curl -s https://raw.githubusercontent.com/X3ric/ArchX/master/pkg-files/awesome.txt | sed '/--END OF MINIMAL INSTALL--/d')
         echo "[✔]::[Deps]: checking aur-pkgs!"
         while IFS= read -r package; do
+            if [[ ${package:0:1} == '#' ]]; then
+                continue
+            fi
             yay -S --noconfirm --needed "$package" 2>&1 | grep -E -v 'up to date|nothing to do' &
             loading_animation $! "$package"
         done < <(curl -s https://raw.githubusercontent.com/X3ric/ArchX/master/pkg-files/aur-pkgs.txt | sed '/--END OF MINIMAL INSTALL--/d')
@@ -169,19 +236,32 @@ loading_animation() {
             "/usr/share/applications/rofi-theme-selector.desktop"
             "/usr/share/applications/xfce4-about.desktop"
             "/usr/share/applications/htop.desktop"
+            "/usr/share/applications/avahi-discover.desktop"
+            "/usr/share/applications/bssh.desktop"
+            "/usr/share/applications/bvnc.desktop"
+            "/usr/share/applications/electron25.desktop"
+            "/usr/share/applications/picom.desktop"
+            "/usr/share/applications/xfce4-clipman.desktop"
          )
-          for file in "${files_to_hide[@]}"; do
-              if [ -f "$file" ]; then
-                  echo "NoDisplay=true" | sudo tee -a "$file" &>/dev/null
-              fi
-          done
+         for file in "${files_to_hide[@]}"; do
+          if [ -f "$file" ]; then
+            echo "NoDisplay=true" | sudo tee -a "$file" &>/dev/null
+          fi
+         done
         echo "[✔]::[X3ric/usr]: config installation"
         usr=$(whoami)
         if [ -d $HOME/.cache/usr ]; then
           echo "Saving your personal changes to $difffile"
-          find "$HOME/.cache/usr" -type f \( ! -name 'README.md' -a ! -name 'LICENSE' \) \
-              -not \( -path './.cache/usr/.git*' -o -path './.cache/usr/.mozilla*' -o -path './.cache/usr/.cache*' \) -print0 \
-              | xargs -0 -P "$(nproc)" -I {} bash -c 'basefile="${0#*/.cache/usr/}"; diff -uN "$0" "./$basefile"' {} \; > "$difffile"
+          find "$HOME/.cache/usr" -type f \
+            \( ! -name 'README.md' -a ! -name 'LICENSE' \) \
+            -not \( -path "$HOME/.cache/usr/.git*" -o -path "$HOME/.cache/usr/.mozilla*" -o -path "$HOME/.cache/usr/.cache*" \) \
+            -print0 | xargs -0 -P "$(nproc)" -I {} bash -c \
+            'basefile="${0/$HOME\/.cache\/usr\//}"; \
+            if [ -f "./$basefile" ]; then \
+              diff -uN "$0" "./$basefile"; \
+            else \
+              echo "File not found in current directory: $basefile"; \
+            fi' {} > "$difffile"
           cd $HOME/.cache/usr
           git stash
           git pull --rebase
@@ -208,6 +288,10 @@ loading_animation() {
         [ -f "$HOME/archx" ] && sudo rm -Rf $HOME/archx
       fi
     }
+if [[ $1 == "updates" ]]; then
+  updates-notify
+  exit
+fi
 clear && checkwget && checkyay && checkgit && checkfzf
 menu_state=1
 exit_flag=false
@@ -217,6 +301,7 @@ while true; do
   elif [[ $menu_state -eq 1 ]]; then
     showlogo
     echo -e "                  \E[32m[ ARCHXMENU ]\033[0m"
+    updates
     if [ -f "$HOME/.local/share/bin/archx" ]; then
       options=("Install" "Update" "Quit")
       selected_option=$(printf '%s\n' "${options[@]}" | fzf-tmux --prompt="Find = " -x --color=16 --height ${FZF_TMUX_HEIGHT:-40%} -m --reverse --ansi)
@@ -238,15 +323,11 @@ while true; do
   elif [[ $menu_state -eq 2 ]]; then
     showlogo
     echo -e "                  \033[1m[INSTALLERS]\033[0m"
-    options=("Services" "Upgrade" "Picom" "Emacs" "Wine" "Ctpv" "Back")
+    options=("Services" "Apps" "Back")
     selected_option=$(printf '%s\n' "${options[@]}" | fzf-tmux --prompt=" Find = " -x --color=16 --height ${FZF_TMUX_HEIGHT:-40%} -m --reverse --ansi)
     case $selected_option in
-      "Upgrade") clear && yay -Syu --noconfirm || exit_flag=true ;;
       "Services") menu_state=3 ;;
-      "Emacs") clear && installemacs || exit_flag=true ;;
-      "Picom") clear && installpicom || exit_flag=true ;;
-      "Wine") clear && installwine || exit_flag=true ;;
-      "Ctpv") clear && installctpv || exit_flag=true ;;
+      "Apps") menu_state=4 ;;
       "Back") menu_state=1 ;;
       *) echo "Invalid option = $selected_option" && sleep 1 ;;
     esac
@@ -259,6 +340,20 @@ while true; do
     case $selected_option in
       "Printers") clear && installprinters || exit_flag=true ;;
       "Samba") clear && installsamba || exit_flag=true ;;
+      "Back") menu_state=2 ;;
+      *) echo "Invalid option = $selected_option" && sleep 1 ;;
+    esac
+  elif [[ $menu_state -eq 4 ]]; then
+    showlogo
+    echo -e "                  \033[1m[INSTALLERS]\033[0m"
+    options=("Upgrade" "Picom" "Emacs" "Wine" "Ctpv" "Back")
+    selected_option=$(printf '%s\n' "${options[@]}" | fzf-tmux --prompt=" Find = " -x --color=16 --height ${FZF_TMUX_HEIGHT:-40%} -m --reverse --ansi)
+    case $selected_option in
+      "Upgrade") clear && yay -Syu --noconfirm || exit_flag=true ;;
+      "Emacs") clear && installemacs || exit_flag=true ;;
+      "Picom") clear && installpicom || exit_flag=true ;;
+      "Wine") clear && installwine || exit_flag=true ;;
+      "Ctpv") clear && installctpv || exit_flag=true ;;
       "Back") menu_state=2 ;;
       *) echo "Invalid option = $selected_option" && sleep 1 ;;
     esac

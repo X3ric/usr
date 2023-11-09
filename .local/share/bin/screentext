@@ -1,5 +1,5 @@
 #!/bin/python3
-
+# Screen text recognition
 import subprocess
 import sys
 import pytesseract

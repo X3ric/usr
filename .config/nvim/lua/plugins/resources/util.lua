@@ -10,6 +10,11 @@ M.has = function(plugin)
   return require("lazy.core.config").plugins[plugin] ~= nil
 end
 
+function M.get_clients(...)
+  local fn = vim.lsp.get_clients or vim.lsp.get_active_clients
+  return fn(...)
+end
+
 --- @param on_attach fun(client, buffer)
 M.on_attach = function(on_attach)
   vim.api.nvim_create_autocmd("LspAttach", {
@@ -33,6 +38,23 @@ M.get_highlight_value = function(group)
   return hl_config
 end
 
+-- return plugin opts
+---@param name string
+function M.opts(name)
+  local plugin = require("lazy.core.config").plugins[name]
+  if not plugin then
+    return {}
+  end
+  local Plugin = require("lazy.core.plugin")
+  return Plugin.values(plugin, "opts", false)
+end
+
+-- returns the root directory based on:
+-- * lsp workspace folders
+-- * lsp root_dir
+-- * root pattern of filename of the current buffer
+-- * root pattern of cwd
+---@return string
 M.get_root = function()
   ---@type string?
   local path = vim.api.nvim_buf_get_name(0)
@@ -92,6 +114,7 @@ M.telescope_theme = function(type)
   })
 end
 
+---@param builtin "find_files" | "live_grep" | "buffers"
 ---@param type "ivy" | "dropdown" | "cursor" | nil
 M.telescope = function(builtin, type, opts)
   local params = { builtin = builtin, type = type, opts = opts }
@@ -550,6 +573,7 @@ M.themesethl = function(theme,termcolors,pywall)
     vim.api.nvim_set_hl(0, "NvimTreeEmptyFolderName", {fg = theme.c.base15, bg = theme.c.base00})
     vim.api.nvim_set_hl(0, "NvimTreeOpenedFolderName", {fg = theme.c.base15, bg = theme.c.base00})
     vim.api.nvim_set_hl(0, "NvimTreeNormal", {fg = theme.c.base04, bg = theme.c.base00})
+    vim.api.nvim_set_hl(0, "NeoTreeFileName", {fg = theme.c.base04, bg = theme.c.base00})
     vim.api.nvim_set_hl(0, "NeogitBranch", {fg = theme.c.base10, bg = theme.c.base00})
     vim.api.nvim_set_hl(0, "NeogitRemote", {fg = theme.c.base09, bg = theme.c.base00})
     vim.api.nvim_set_hl(0, "NeogitHunkHeader", {fg = theme.c.base04, bg = theme.c.base02})
@@ -586,6 +610,13 @@ M.themesethl = function(theme,termcolors,pywall)
     vim.api.nvim_set_hl(0, "TSRainbowGreen", {fg= theme.c.base15})
     vim.api.nvim_set_hl(0, "TSRainbowViolet", {fg= theme.c.base09})
     vim.api.nvim_set_hl(0, "TSRainbowCyan", {fg= theme.c.base11})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterRed", {fg= theme.c.base08})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterYellow", {fg= theme.c.base12})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterBlue", {fg= theme.c.base13})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterOrange", {fg= theme.c.base14})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterGreen", {fg= theme.c.base15})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterViolet", {fg= theme.c.base09})
+    vim.api.nvim_set_hl(0, "RainbowDelimiterCyan", {fg= theme.c.base11})
     vim.api.nvim_set_hl(0, "DashboardRecent", {fg = theme.c.base09})
     vim.api.nvim_set_hl(0, "DashboardConfiguration", {fg = theme.c.base15})
     vim.api.nvim_set_hl(0, "DashboardSession", {fg = theme.c.base10})
@@ -594,5 +625,33 @@ M.themesethl = function(theme,termcolors,pywall)
     vim.api.nvim_set_hl(0, "DashboardQuit", {fg = theme.c.base12})
     vim.api.nvim_set_hl(0, "CmpItemKindVariable", {fg = "#09B6A2"})
 end
+
+-- Clangd lsp .clangd include project libs
+
+_G.generate_clangd_config = function()
+  local util = require('lspconfig.util')
+  local root_dir = (util.root_pattern('.git', 'CMakeLists.txt', 'Makefile')(vim.fn.expand('%:p:h')) or vim.fn.expand('%:p:h')) 
+  local include_dir = util.path.join(root_dir, 'include')
+  if not util.path.is_dir(include_dir) then
+      print("Include directory not found in the project root.")
+      return
+  end
+  local clangd_config_path = util.path.join(root_dir, '.clangd')
+  local file_content = 'CompileFlags:\n  Add: \n    - "-I' .. include_dir .. '"'
+  local file, err = io.open(clangd_config_path, "w")
+  if not file then
+      print("Error opening .clangd file for writing: " .. err)
+      return
+  end
+  file:write(file_content)
+  file:close()
+end
+
+vim.cmd [[
+augroup clangd_config
+  autocmd!
+  autocmd FileType c,cpp,h,hpp lua generate_clangd_config()
+augroup END
+]]
 
 return M

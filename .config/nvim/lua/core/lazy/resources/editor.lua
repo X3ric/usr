@@ -176,6 +176,7 @@ return {
       { "<leader>F", Util.telescope("live_grep"), desc = "Find Text" },
       { "<leader>bf", Util.telescope("buffers"), desc = "Find buffer" },
     },
+    -- config = function() require("plugins.configs.telescope") end,
   },
   { -- WhichKey
     "folke/which-key.nvim",
@@ -283,6 +284,7 @@ return {
         "TelescopeResult",
         "DressingInput",
         "neo-tree-popup",
+        "markdown",
         "",
       },
       delay = 200,
@@ -386,7 +388,6 @@ return {
   },
   { -- fold functions in the linenumber
     "luukvbaal/statuscol.nvim",
-
     event = { "BufReadPost", "BufNewFile" },
     config = function()
       local builtin = require("statuscol.builtin")

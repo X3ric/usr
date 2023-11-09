@@ -48,7 +48,7 @@ return {
   },
   { -- provides support for expanding abbreviations
     "mattn/emmet-vim",
-    event = { "BufRead" },
+    event = { "BufRead", "BufNewFile" },
     init = function()
       vim.g.user_emmet_leader_key = "f"
       vim.g.user_emmet_mode = "n"
@@ -86,8 +86,8 @@ return {
   { -- provides completiton
     "hrsh7th/nvim-cmp",
     version = false,
-    commit = "b8c2a62b3bd3827aa059b43be3dd4b5c45037d65",
     event = { "InsertEnter", "CmdlineEnter" },
+    -- commit = "b8c2a62b3bd3827aa059b43be3dd4b5c45037d65",
     dependencies = {
       "mfussenegger/nvim-jdtls",
       "hrsh7th/cmp-nvim-lsp",
@@ -95,10 +95,12 @@ return {
       "hrsh7th/cmp-path",
       "hrsh7th/cmp-cmdline",
       "saadparwaiz1/cmp_luasnip",
+      "hrsh7th/cmp-nvim-lsp",
     },
     opts = function()
       local cmp = require("cmp")
-      cmp.setup.cmdline("/", {
+      local defaults = require("cmp.config.default")()
+      cmp.setup.cmdline({ "/", "?" }, {
         mapping = cmp.mapping.preset.cmdline(),
         sources = { { name = "buffer" } },
       })
@@ -145,24 +147,26 @@ return {
         formatting = {
           fields = { "kind", "abbr", "menu" },
           format = function(entry, item)
-            local icons = require("custom.icons")
-            item.kind = icons.kinds[item.kind]
-            if entry.source.name == "codeium" then
-              item.kind = icons.misc.codeium
-              item.kind_hl_group = "CmpItemKindVariable"
-            end
             item.menu = ({
               codeium = "Codeium",
-              nvim_lsp = "Lsp",
-              nvim_lua = "Lua",
+              nvim_lsp = item.kind,
               luasnip = "Snippet",
               buffer = "Buffer",
               path = "Path",
             })[entry.source.name]
+            local icons = require("custom.icons")
+            if icons.kinds[item.kind] then
+              item.kind = icons.kinds[item.kind]
+            end
+            if entry.source.name == "codeium" then
+              item.kind = icons.misc.codeium
+              item.kind_hl_group = "CmpItemKindVariable"
+            end
             return item
           end,
         },
         experimental = { ghost_text = true },
+        sorting = defaults.sorting,
       }
     end,
   },
@@ -177,7 +181,8 @@ return {
     'Wansmer/treesj',
     dependencies = { 'nvim-treesitter/nvim-treesitter' },
     config = function()
-      vim.keymap.set('n', '<leader>j', require('treesj').toggle , {desc = 'Treesitter Toggle Join'})
+      vim.keymap.set('n', '<leader>j', function () require('treesj').toggle() end , {desc = 'Treesitter Toggle Join'})
+      vim.keymap.set('n', '<leader>J', function () require('treesj').toggle({ split = { recursive = true } }) end , {desc = 'Treesitter Toggle Join Recursive'})
       require('treesj').setup({
         use_default_keymaps = false,
         check_syntax_error = true,

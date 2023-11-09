@@ -10,17 +10,25 @@ if not vim.loop.fs_stat(lazypath) then
   })
 end
 vim.opt.rtp:prepend(lazypath)
+
 -- load lazy
 vim.cmd('colorscheme oxoterm')
 require("lazy").setup({
-  spec = "core.lazy.resources",
+  spec = {
+    { import = "core.lazy.resources" },
+    { import = "core.lazy.resources.lang.python", enabled = true },
+    { import = "core.lazy.resources.lang.typescript", enabled = false },
+    { import = "core.lazy.resources.lang.json", enabled = false },
+    { import = "core.lazy.resources.lang.java", enabled = false },
+    { import = "core.lazy.resources.lang.docker", enabled = false },
+    { import = "core.lazy.resources.lang.clangd", enabled = true },
+  },
   defaults = {
     lazy = false,
     -- version = false, -- always use the latest git commit
     version = "*", -- try installing the latest stable version for plugins that support semver
   },
-  --install = { colorscheme = { "monokai-pro", "habamax" } },
-  install = { colorscheme = { "" } },
+  install = { colorscheme = { "" } },--install = { colorscheme = { "monokai-pro", "habamax" } },
   checker = { enabled = false, notify = false },
   performance = {
     rtp = {

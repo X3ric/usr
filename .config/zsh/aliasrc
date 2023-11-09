@@ -35,7 +35,7 @@
   alias fzf-file='x=$(fzf-splitted) && xdg-open $x'
   alias fzf-dir='x=$(find . -type d -print 2>/dev/null | fzf-splitted) && thunar ${x%/*}'
   alias fzf-dircd='x=$(find . -type d -print 2>/dev/null | fzf-splitted) && cd ${x%/*}'
-  alias fzf-images='fzf --preview-window=up:90% --cycle --preview "chafa --stretch -C on {}"'
+  alias fzf-images='fzf --preview-window=up:95% --cycle --preview "fzf-preview.sh {}"'
 # Pkg managment
   alias pacman-update='sudo pacman-mirrors --geoip' 
   alias y='yay -S'
@@ -77,6 +77,9 @@
   alias py='python3'
   alias tmux='tmux source-file $HOME/.config/tmux/tmux.conf; tmux'
   alias walengine='WEBKIT_DISABLE_COMPOSITING_MODE=1 walengine'
+  alias ftp='sftp'
+  # enables top menu but alt+\ "global hud" not work in it
+  alias globalmenu-disable='UBUNTU_MENUPROXY=0'
 # Fast shortcuts
   alias zshrc='${=EDITOR} ~/.zshrc'
   alias aliasrc='${=EDITOR} ~/.config/zsh/aliasrc'

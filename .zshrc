@@ -28,6 +28,7 @@ ZSH_AUTOSUGGEST_STRATEGY=(history completion)
 ZSH_AUTOSUGGEST_USE_ASYNC=true
 bindkey '^ ' autosuggest-accept
 bindkey -s '^B' "bookmarks\n"
+bindkey -s '^T' "td\n"
 bgnotify_threshold=4  ## set your own notification threshold
 function notify_formatted {
   ## $1=exit_status, $2=command, $3=elapsed_time
@@ -58,10 +59,10 @@ command_not_found_handler() {
   nyack "$1" || return 1
 }
 # Autocomplete
-_cheat.sh() { # cheat.sh command/bin autocomplete "tab"
+_cheat() { # cheat.sh command/bin autocomplete "tab"
     _arguments "1: :($(for dir in $(echo "$PATH" | tr ':' ' '); do \ls $dir; done))"
 }
-compdef _cheat.sh cheat.sh
+compdef _cheat cheat
 _conf() { # conf autocomplete in .config dir
     local curcontext="$curcontext" state line
     _path_files -/ -W "$HOME/.config/" && return
@@ -114,8 +115,24 @@ _pacman-list() { # Autocompletion for pacman-list command
   esac
 }
 compdef _pacman-list pacman-list
+_isoburn() { # Autocompletion for isoburn functions
+  _files -g "*.iso"
+}
+compdef _isoburn isoburn
 _explain() { # Autocompletion for explain functions
-    local functions=$(cat "$HOME/.config/zsh/funcrc" 2>/dev/null | grep -o '^\w*' | sort -u)
-    _arguments "1: :($functions)"
+    local all_commands=()
+    if [[ -f "$HOME/.config/zsh/funcrc" ]]; then
+        local funcrc_functions=$(grep -E '^\w+\(\)' "$HOME/.config/zsh/funcrc" | sed 's/().*$//')
+        all_commands+=("${funcrc_functions[@]}")
+    fi
+    if [[ -f "$HOME/.config/zsh/aliasrc" ]]; then
+        local aliasrc_aliases=$(sed -n '5,13d; s/^  alias -\?g* \?\([^=]*\)=.*/\1/p' "$HOME/.config/zsh/aliasrc")
+        all_commands+=("${aliasrc_aliases[@]}")
+    fi
+    if [[ -d "$HOME/.local/share/bin" ]]; then
+        all_commands+=($(find "$HOME/.local/share/bin" -maxdepth 1 -type f -exec basename {} \;))
+    fi
+    all_commands=($(echo "${all_commands[@]}" | sort -u))
+    _arguments "1: :(${all_commands[*]})"
 }
 compdef _explain explain

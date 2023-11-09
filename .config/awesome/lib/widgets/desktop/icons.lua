@@ -196,7 +196,7 @@
                 elseif file.filename:match("%.AppImage$") then
                     onclick = function () awful.spawn.with_shell(string.format("%s", file.path)) end
                 elseif file.filename:match("%.desktop$") then
-                    onclick = function () awful.spawn.with_shell(string.format("%s", file.path)) end
+                    onclick = function () awful.spawn.with_shell(string.format("zsh -ci %s", file.path)) end
                     label = file.filename:gsub("%.desktop$", "") -- hide .desktop suffix
                 elseif file.filename:match("%.[^%.]+$") then
                     onclick = function () awful.spawn("xdg-open " .. file.path) end

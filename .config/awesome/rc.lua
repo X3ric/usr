@@ -126,7 +126,6 @@
 			awful.button({ }, 2, function () widget.updates:update(true) end),
 			awful.button({ }, 3, function () widget.updates:toggle() end)
 		)
-		widget.updates:update(false)
 	-- Mail
 		local my_mails = require("mail")
 		pcall(function() my_mails = require("private.mail-config") end)
@@ -203,6 +202,9 @@
 			local function checkSongChange()
 				hideDelay = Delay
 				local currentSong = io.popen("mpc current"):read("*a"):gsub("^%s*(.-)%s*$", "%1")
+				if previousSong == "" and currentSong ~= previousSong then
+					previousSong = currentSong
+				end
 				if currentSong ~= previousSong then
 					if not float.player.wibox.visible then
 						float.player:show(rb_corner())
@@ -279,8 +281,8 @@
 			local bool barhide = true
 			if barhide then
 				local last_positions = {}
-				local function moverezie(c, enable_downward_movement)
-					if (c.floating or (awful.tag.selected(c.screen).layout.name == "floating")) and not c.maximized  then
+				local function moverezie(c)
+					if ( (c.floating or awful.tag.selected(c.screen).layout.name == "floating")) and not c.maximized or (awful.tag.selected(c.screen).layout.name == "maximized") then
 						local screen = screen[c.screen]
 						local screen_geometry = screen.workarea
 						local bar_geometry = screen.panel:geometry()
@@ -297,12 +299,12 @@
 						else
 							new_geometry.y = math.min(new_geometry.y, screen_geometry.y)
 						end
-						if enable_downward_movement then
-							new_geometry.y = math.min(new_geometry.y, screen_geometry.height - new_geometry.height)
-							new_geometry.height = math.max(new_geometry.height + bar_geometry.height, 0)
-						elseif screen.panel.visible then
+						if screen.panel.visible then
 							new_geometry.y = math.max(new_geometry.y, bar_geometry.height)
 							new_geometry.height = math.max(new_geometry.height - bar_geometry.height, 0)
+						else
+							new_geometry.y = math.min(new_geometry.y, screen_geometry.height - new_geometry.height)
+							new_geometry.height = math.max(new_geometry.height + bar_geometry.height, 0)
 						end
 						c:geometry(new_geometry)
 						last_positions[c] = last_position
@@ -328,7 +330,7 @@
 						s.panel.visible = false
 						bar_visible = false
 					else
-						s.panel.visible = bar_visible
+						s.panel.visible = true
 						bar_visible = true
 					end
 				end
@@ -356,7 +358,7 @@
 					for _, c in ipairs(client.get()) do
 						if c.first_tag == mouse_screen.selected_tag then
 							if prev_bar_visible ~= bar_visible then
-								moverezie(c, not bar_visible)
+								moverezie(c)
 							end
 						end
 					end

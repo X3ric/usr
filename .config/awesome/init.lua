@@ -29,6 +29,12 @@ local function run_from_file(file_)
     f:close()
 end
 run_once({ "unclutter -root" })
+-- Autoclose picom on max cpu usage 
+--gears.timer {
+--    timeout   = 5,
+--    autostart = true,
+--    callback  = function () awful.spawn("zsh -ci picom-cpumax") end
+--}
 -- XDG autostart specification
 	--awful.spawn.with_shell(
 	--    'if (xrdb -query | grep -q "^awesome\\.started:\\s*true$"); then exit; fi;' ..

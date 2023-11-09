@@ -124,6 +124,19 @@ function minitray:hide()
 	self.wibox.visible = false
 end
 
+-- Hide on outside click
+--------------------------------------------------------------------------------
+local function click_outside_minitray(c)
+    if not minitray.wibox then return end
+    local mx, my = mouse.coords().x, mouse.coords().y
+    local wx, wy = minitray.wibox:geometry().x, minitray.wibox:geometry().y
+    local ww, wh = minitray.wibox:geometry().width, minitray.wibox:geometry().height
+    if mx < wx or my < wy or mx > wx + ww or my > wy + wh then
+        minitray:hide()
+    end
+end
+client.connect_signal("button::press", click_outside_minitray)
+
 -- Toggle
 --------------------------------------------------------------------------------
 function minitray:toggle()

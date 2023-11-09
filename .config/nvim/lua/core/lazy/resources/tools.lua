@@ -68,6 +68,24 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     keys = { { "<leader>cb", "<cmd>TagbarToggle<CR>", desc = "Open TagBar" } },
   },--]]
+   -- {
+   -- "iamcco/markdown-preview.nvim",
+   -- cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+   -- build = "cd app && yarn install",
+   -- keys = {
+   --   {
+   --     "<leader>p",
+   --     function()
+   --       vim.cmd([[MarkdownPreviewToggle]])
+   --     end,
+   --     desc = "Peek (Markdown Preview)",
+   --   },
+   -- },
+   -- init = function()
+   --   vim.g.mkdp_filetypes = { "markdown" }
+   -- end,
+   -- ft = { "markdown" },
+   --},
   { -- buffers close without messing up your layout.
     "moll/vim-bbye",
     event = { "BufRead" },

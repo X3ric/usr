@@ -44,6 +44,14 @@
         local center_y = c.y + c.height / 2
         awful.spawn("xdotool mousemove " .. center_x .. " " .. center_y)
     end
+    function show_all_minimized_apps()
+        local clients = client.get()
+        for _, c in pairs(clients) do
+            if c.minimized then
+                c.minimized = false
+            end
+        end
+    end
     local function focus_to_previous()
         awful.client.focus.history.previous()
         if client.focus then client.focus:raise() end
@@ -413,7 +421,7 @@
             {{ env.mod }, "Print" , function () awful.spawn.with_shell("zsh -ci screenshot") end,{description = "Screenshot" , group = "Screen"}},
             {{ env.mod , "Shift" }, "Print" , function () awful.spawn.with_shell("zsh -ci screencrop") end,{description = "Screencrop" , group = "Screen"}},
             {{ env.mod , env.alt }, "Print", function () awful.spawn.with_shell("zsh -ci screentext") end,{description = "Screen text ocr", group = "Screen"}},
-            {{ env.mod }, "F3" , function () awful.util.spawn( "rofi -show drun -theme applications -show-icons" ) end,{description = "menu appfinder" , group = "Actions"}},
+            {{ env.mod }, "F3" , function () awful.spawn.with_shell("zsh -ci 'rofi -show drun -theme applications -show-icons'" ) end,{description = "menu appfinder" , group = "Actions"}},
             {{ env.mod }, "F4" , function() awful.spawn.with_shell("zsh -ci picom-toggle") end,{description = "Picom toggle" , group = "Actions"}},
             {{ env.mod }, "," , function() awful.spawn.with_shell("rofi -modi emoji -show emoji -theme x") end,{description = "Emoji menu" , group = "Actions"}},        
             {{ env.mod }, "w" , function () awful.util.spawn( env.browser ) end,{description = "Open Broswer", group = "Actions"}},
@@ -422,6 +430,7 @@
             {{ env.mod }, "Escape" , function () awful.util.spawn( "xkill" ) end,{description = "Kill proces" , group = "Actions"}},
             {{ env.mod , "Shift" }, "c" , function ()  awful.util.spawn("gpick -s") end,{description = "Color picker" , group = "Actions"}},
             {{ env.mod }, "p" , function () toggleapp("arandr") end,{description = "Screen projection" , group = "Screen"}},
+            {{ env.mod , "Shift" }, "n", show_all_minimized_apps,{description = "show all minimized apps", group = "client"}},
             --{{ env.mod }, "b" , function () for s in screen do s.panel.visible = not s.panel.visible if s.panel then s.panel.visible = not s.panel.visible end end end,{description = "toggle wibox" , group = "Actions"}},
             {{ env.mod, "Shift" }, "x", function() logout:show() end,{ description = "Log out screen", group = "Widgets" }},
             --{{ env.mod , "Shift" }, "d",function () awful.spawn(string.format("dmenu_run -i -nb '%s' -nf '%s' -sb '%s' -sf '%s' -fn NotoMonoRegular:bold:pixelsize=11",beautiful.bg_normal, beautiful.fg_normal, beautiful.bg_focus, beautiful.fg_focus))end,{description = "Show dmenu" , group = "Actions"}},

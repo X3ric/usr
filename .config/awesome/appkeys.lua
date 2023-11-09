@@ -10,6 +10,7 @@ appkeys["kitty"] = {
         { { "Ctrl" }, "f", nil, { description = "Paste selected dir", group = "Shell" } },
         { { "Ctrl" }, "p", nil, { description = "Find text in files", group = "Shell" } },
         { { "Ctrl" }, "r", nil, { description = "Search in history", group = "Shell" } },
+        { { "Ctrl" }, "t", nil, { description = "Search in todo", group = "Shell" } },
         { { "Ctrl" }, "b", nil, { description = "Bookmarks", group = "Shell" } },
         { { "alt" }, "c", nil, { description = "Select a dir", group = "Shell" } },
         { { "Ctrl", "Shift" }, "F1", nil, { description = "show help", group = "Kitty" } },
