@@ -107,10 +107,10 @@
 	-- Keyboard
 		local kbindicator = {}	
 		local lay = {}
-		lay[0] = io.popen("localectl status"):read("*all"):match("X11 Layout:%s+(%S+)")
+		lay[0] = io.popen("setxkbmap -query | awk '/layout:/ {print $2}'"):read("*all")
 		lay[1] = "us"
 		widget.keyboard:init({ lay[0] , lay[1] })
-		os.execute("setxkbmap -layout " .. lay[0],lay[1])
+		awful.spawn("setxkbmap -layout " .. lay[0],lay[1])
 		kbindicator.widget = widget.keyboard()
 		kbindicator.buttons = awful.util.table.join(
 			awful.button({}, 1, function () widget.keyboard:toggle_menu() end),

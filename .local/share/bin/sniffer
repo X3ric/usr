@@ -1,0 +1,82 @@
+#!/bin/zsh
+# Termshark fzf menu
+# Deps
+    check_install_dependency() {
+        local dependency=$1
+        local install_command=$2
+        if ! pacman -Q $dependency &> /dev/null; then
+            echo "$dependency could not be found, installing it."
+            eval $install_command
+        fi
+    }
+    check_install_dependency "fzf" "sudo pacman -Sy --needed --noconfirm fzf"
+    check_install_dependency "termshark" "sudo pacman -Sy --needed --noconfirm termshark"
+# Fzf alias
+    alias fzf='fzf --color=16'
+    alias fzf-tmux='fzf-tmux --color=16'
+    fzf-splitted () { # fzf splitted view adaptation for tmux
+        if [[ -n "$TMUX" ]]; then 
+        fzf --reverse --ansi "$@"
+        else 
+        fzf-tmux -x --height ${FZF_TMUX_HEIGHT:-40%} --reverse --cycle --ansi "$@"
+        fi 
+    }
+# Interface scanning
+    select_network_interface() {
+        local interfaces=$(ip link show | grep -oP '^\d+: \K[^:]+(?=:)' | tac)
+        local selected_interface=$(echo "$interfaces" | fzf-splitted --prompt="Select an interface: ")
+        if [ -z "$selected_interface" ]; then
+            echo "No interface selected. Exiting."
+            exit 1
+        fi
+        echo "-i=\"$selected_interface\""
+    }
+    selected_interface=$(select_network_interface)
+# Filtering
+optionst=("Display Filters" "Main Filters" "IP in/out" "IP in-out" "IP out" "IP in" "HTTP/S" "HTTPS" "HTTP" "PORT")
+select_option=$(printf '%s\n' "${optionst[@]}" | fzf-splitted --prompt="Select an option: ")
+case $select_option in
+    "Display Filters")
+        vared -p 'Input the display-> ' -c x
+        filter="-Y=\"$x\""
+        ;;
+    "Main Filters")
+        vared -p 'Input the filter-> ' -c x
+        filter="-f=\"$x\""
+        ;;
+    "IP in/out")
+        vared -p 'Ip-> ' -c x
+        filter="-Y=\"ip.addr == $x\""
+        ;;
+    "IP in-out")
+        vared -p 'Ip-in-> ' -c src
+        vared -p 'Ip-out-> ' -c dst
+        filter="-Y=\"ip.dst == $dst && ip.src == $src\""
+        ;;
+    "IP out")
+        vared -p 'Ip-> ' -c x
+        filter="-Y=\"ip.dst == $x\""
+        ;;
+    "IP in")
+        vared -p 'Ip-> ' -c x
+        filter="-Y=\"ip.src == $x\""
+        ;;
+    "HTTP/S")
+        filter="-f=\"port 80 or 443\""
+        ;;
+    "HTTPS")
+        filter="-f=\"port 443\""
+        ;;
+    "HTTP")
+        filter="-f=\"port 80\""
+        ;;
+    "PORT")
+        vared -p 'Port-> ' -c x
+        filter="-f=\"port $x\""
+        ;;
+    *)
+        filter=""
+        ;;
+esac
+echo "sudo termshark "$selected_interface" "$filter""
+sudo termshark $selected_interface $filter

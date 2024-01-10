@@ -45,13 +45,6 @@ return {
     "mg979/vim-visual-multi",
     event = { "BufReadPost", "BufNewFile" },
   },
-  { -- compile function to compile languages configured in ./.config/nvim/lua/plugins/configs/compile.lua to add more languages or you own build file
-    "loctvl842/compile-nvim",
-    lazy = true,
-    config = function()
-      require("config.compile")
-    end,
-  },
   --[[{ -- :Glow to have markdown preview
     "ellisonleao/glow.nvim", 
     config = function()

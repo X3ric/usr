@@ -6,6 +6,7 @@ return {
     event = { "BufReadPost", "BufNewFile" },
     opts = {
       ensure_installed = {
+        "vimdoc",
         "bash",
         "html",
         "javascript",
@@ -56,7 +57,7 @@ return {
           [""] = "rainbow-delimiters",
           lua = "rainbow-blocks",
           tsx = "rainbow-parens",
-          javascript = "rainbow-delimiters-react"
+          javascript = "rainbow-delimiters-react",
         },
         highlight = {
           "RainbowDelimiterRed",

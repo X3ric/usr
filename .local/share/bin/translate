@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
-# Google Translate wrapper
-"""
-Translates a string to a specified language without using external APIs.
-Usage: translate <from_lang>:<to_lang> <text to translate>
-"""
+# Translate a string to a specified language without using external APIs.
 import os
 import sys
 import re

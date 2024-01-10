@@ -177,6 +177,7 @@ return {
       { "<leader>bf", Util.telescope("buffers"), desc = "Find buffer" },
     },
     -- config = function() require("plugins.configs.telescope") end,
+    --config = function(_, opts) require("telescope").setup(opts) end,
   },
   { -- WhichKey
     "folke/which-key.nvim",
@@ -240,7 +241,7 @@ return {
       },
       current_line_blame_formatter = "<author>, <author_time:%Y-%m-%d> - <summary>",
       preview_config = {
-        border = Util.generate_borderchars("thick", "tl-t-tr-r-bl-b-br-l"), -- [ top top top - right - bottom bottom bottom - left ]
+        border = Util.generate_borderchars("thick", "tl-t-tr-r-br-b-bl-l"), -- [ top top top - right - bottom bottom bottom - left ]
       },
     },
     keys = {
@@ -270,7 +271,7 @@ return {
   },--]]
   { -- hilight other uses of the word under the cursor
     "RRethy/vim-illuminate",
-    event = { "BufReadPost", "BufNewFile" },
+    event = { "BufReadPost", "BufNewFile", "BufWritePre" },
     opts = {
       filetypes_denylist = {
         "dirvish",
@@ -288,6 +289,10 @@ return {
         "",
       },
       delay = 200,
+      large_file_cutoff = 2000,
+      large_file_overrides = {
+        providers = { "lsp" },
+      },
     },
     config = function(_, opts)
       require("illuminate").configure(opts)
@@ -371,8 +376,20 @@ return {
         end,
         desc = "Open all folds",
       },
-      { "fm", "zm", desc = "Fold more" },
-      { "fr", "zr", desc = "Fold less" },
+      {
+        "fm",
+        function()
+          require("ufo").closeFoldsWith()
+        end,
+        desc = "Fold more",
+      },
+      {
+        "fr",
+        function()
+          require("ufo").openFoldsExceptKinds()
+        end,
+        desc = "Fold less",
+      },
       { "fx", "zx", desc = "Update folds" },
       { "fz", "zz", desc = "Center this line" },
       { "ft", "zt", desc = "Top this line" },

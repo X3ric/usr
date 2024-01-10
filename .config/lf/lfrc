@@ -35,7 +35,14 @@ cmd delete ${{
 	read ans
 	[ $ans = "y" ] && rm -rf $fx
 }}
+cmd play ${{
+  file="$fx"
+  if [[ "$file" =~ \.(mp3|wav|flac|ogg|aac)$ ]]; then
+    mpg123 "$file"
+  fi
+}}
 # Bindings
+map <c-space> play
 map <c-d> delete
 map <c-f> $lf -remote "send $id select '$(fzf)'"
 map <c-b> : bookmarks

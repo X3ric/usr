@@ -419,7 +419,7 @@
             {{ env.mod }, "space", function() awful.layout.inc(1) end,{ description = "Select next layout", group = "Layouts" }},
             {{ env.mod , "Shift" }, "space", function() awful.layout.inc(-1) end,{ description = "Select previous layout", group = "Layouts" }},
             {{ env.mod }, "Print" , function () awful.spawn.with_shell("zsh -ci screenshot") end,{description = "Screenshot" , group = "Screen"}},
-            {{ env.mod , "Shift" }, "Print" , function () awful.spawn.with_shell("zsh -ci screencrop") end,{description = "Screencrop" , group = "Screen"}},
+            {{ env.mod , "Shift" }, "Print" , function () awful.spawn.with_shell("zsh -ci 'screenshot crop'") end,{description = "Screencrop" , group = "Screen"}},
             {{ env.mod , env.alt }, "Print", function () awful.spawn.with_shell("zsh -ci screentext") end,{description = "Screen text ocr", group = "Screen"}},
             {{ env.mod }, "F3" , function () awful.spawn.with_shell("zsh -ci 'rofi -show drun -theme applications -show-icons'" ) end,{description = "menu appfinder" , group = "Actions"}},
             {{ env.mod }, "F4" , function() awful.spawn.with_shell("zsh -ci picom-toggle") end,{description = "Picom toggle" , group = "Actions"}},

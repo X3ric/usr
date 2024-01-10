@@ -7,6 +7,7 @@ function run {
   fi
 }
 run mpd
+run aria2c
 run nm-applet
 run xfce4-clipman
 run blueman-applet

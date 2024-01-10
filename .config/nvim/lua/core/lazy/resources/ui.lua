@@ -343,7 +343,7 @@ return {
         border = Util.generate_borderchars("thick", "tl-t-tr-r-bl-b-br-l"),
         win_options = { winblend = 0 },
       },
-      select = { telescope = Util.telescope_theme("cursor") },
+      select = { telescope = Util.telescope_theme("cursor", "thick") },
     },
     init = function()
       ---@diagnostic disable-next-line: duplicate-set-field

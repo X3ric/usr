@@ -35,6 +35,7 @@ end
 function pulse:change_volume(args)
 	args = utils.table.merge(change_volume_default_args, args or {})
 	local diff = args.step
+    self._sink = get_default_sink({ type = self._type })
     local v = utils.read.output(string.format("pactl get-%s-volume %s", self._type, self._sink))
     local parsed = string.match(v,"(%d+)%%")
     if not parsed then

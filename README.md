@@ -1,7 +1,5 @@
 <div align="center">
 
-</p><img alt="Arch Linux" src="https://x3ric.is-a.dev/Desktop.jpg"/><br>
-  
 ### Install
   
  ```

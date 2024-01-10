@@ -1,5 +1,11 @@
 local Util = require("plugins.resources.util")
 
+-- Turn off paste mode when leaving insert
+vim.api.nvim_create_autocmd("InsertLeave", {
+  command = "set nopaste",
+  pattern = "*",
+})
+
 -- Highlight on yank
 vim.api.nvim_create_autocmd({ "TextYankPost" }, {
   group = Util.augroup("highlight_yank"),
@@ -42,7 +48,7 @@ vim.api.nvim_create_autocmd({ "FileType" }, {
   pattern = { "gitcommit", "markdown" },
   callback = function()
     vim.opt_local.wrap = true
-    vim.opt_local.spell = true
+    vim.opt_local.spell = false
   end,
 })
 

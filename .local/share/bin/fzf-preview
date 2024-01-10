@@ -7,7 +7,7 @@ if [[ ! $type =~ image/ ]]; then
     file "$1"
     exit
   fi
-  ${batname} --style="${BAT_STYLE:-numbers}" --color=always --pager=never -- "$file"
+  bat --pager=never -- "$file"
   exit
 else
   dim=${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES}

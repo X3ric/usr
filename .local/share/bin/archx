@@ -1,15 +1,15 @@
 #!/bin/bash
 # Archx installer
 function checkwget {
-    which wget > /dev/null 2>&1
-    if [ "$?" -eq "0" ]; then
+  which wget > /dev/null 2>&1
+  if [ "$?" -eq "0" ]; then
     echo [✔]::[wget]: installation found!;
   else
-  echo [✗]::[warning]:this script require wget ;
-  echo ""
-  echo [!]::[please wait]: Installing Wget ;
-  pacman -S wget --noconfirm
-  echo ""
+    echo [✗]::[warning]:this script require wget ;
+    echo ""
+    echo [!]::[please wait]: Installing Wget ;
+    pacman -S wget --noconfirm
+    echo ""
   fi
   sleep 0.25
   }
@@ -89,6 +89,7 @@ loading_animation() {
           sudo smbpasswd -a $choice
         }
       function installwine {
+          mkdir -p $HOME/.local/share/wineprefixes/default
           sudo pacman -S --needed --noconfirm wine winetricks
           echo "Change in Drives > Show dotfiles = true and in Desktop Integration > Theme = null, WinRt theme > Dark"
           echo "and apply"
@@ -212,7 +213,7 @@ loading_animation() {
             if [[ ${package:0:1} == '#' ]]; then
                 continue
             fi
-            yay -S --noconfirm --needed "$package" 2>&1 | grep -E -v 'up to date|nothing to do' &
+            yay -S --quiet --noconfirm --needed "$package" 2>&1 | grep -E -v 'up to date|nothing to do' &
             loading_animation $! "$package"
         done < <(curl -s https://raw.githubusercontent.com/X3ric/ArchX/master/pkg-files/aur-pkgs.txt | sed '/--END OF MINIMAL INSTALL--/d')
         echo "[✔]::[Deps]: all packages checked and installed successfully!"
@@ -283,6 +284,12 @@ loading_animation() {
         sudo rm -Rf $HOME/.git/
         sudo rm -Rf $HOME/README.md
         sudo rm -Rf $HOME/LICENSE
+        if [ -z /etc/zsh/zshenv ]; then
+          echo "export ZDOTDIR=~/.config/zsh" | sudo tee /etc/zsh/zshenv
+          rm -rf ~/.zshenv
+        else
+          [ ! -z /etc/zsh/zshenv ] && rm -rf ~/.zshenv
+        fi
         papirus-folders -C blue > /dev/null 2>&1
         pgrep -x "awesome" >/dev/null && awesome-client "awesome.restart()" > /dev/null 2>&1
         [ -f "$HOME/archx" ] && sudo rm -Rf $HOME/archx

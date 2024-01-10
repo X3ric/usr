@@ -1,0 +1,21 @@
+#!/bin/bash
+# Arch Linux kernel configuration and reinstall
+if ! pacman -Q git &> /dev/null; then
+    sudo pacman -Sy --needed --noconfirm git
+fi
+DIRLX="$HOME/mkarch"
+function kernel() {
+    mkdir "$DIRLX" 2> /dev/null 
+    cd "$DIRLX"
+    git clone https://gitlab.archlinux.org/archlinux/packaging/packages/linux.git
+    cd linux
+    sudo sed -i '/ diff/a make menuconfig' PKGBUILD
+    mkdir "$DIRLX/oldkernel" 2> /dev/null
+    sudo cp -rf /boot/* "$DIRLX/oldkernel"
+    makepkg -si --skippgpcheck
+    sudo grub-mkconfig -o /boot/grub/grub.cfg   
+}
+sudo rm -rf "$DIRLX/linux"
+if [[ ! -d "$DIRLX/linux" ]]; then
+    kernel
+fi

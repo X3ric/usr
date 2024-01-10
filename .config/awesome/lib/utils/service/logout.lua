@@ -1,8 +1,3 @@
------------------------------------------------------------------------------------------------------------------------
---                                             RedFlat logout screen                                                 --
------------------------------------------------------------------------------------------------------------------------
-
--- Grab environment
 local awful = require("awful")
 local wibox = require("wibox")
 local gears = require("gears")
@@ -12,12 +7,8 @@ local utils = require("lib.utils")
 local redtip = require("lib.widgets.float.hotkeys")
 local svgbox = require("lib.widgets.gauge.svgbox")
 
--- Initialize tables and vars for module
------------------------------------------------------------------------------------------------------------------------
 local logout = { entries = {}, action = {}, keys = {} }
 
--- Generate default theme vars
------------------------------------------------------------------------------------------------------------------------
 local function default_style()
 	local style = {
 		button_size         = { width = 128, height = 128 },
@@ -45,51 +36,33 @@ local function default_style()
 	return utils.table.merge(style, utils.table.check(beautiful, "service.logout") or {})
 end
 
--- Support functions
------------------------------------------------------------------------------------------------------------------------
-
--- Gracefully closes down user-owned application processes
-------------------------------------------------------------
 local function gracefully_close(application)
 	if application.pid then
-		-- first try sending SIGTERM to the owning process
 		awful.spawn.easy_async("kill -SIGTERM " .. tostring(application.pid), function(_, _, _, exitcode)
 			if exitcode ~= 0 then
-				-- kill might fail for root-owned process or processes with fake PIDs
-				-- (e.g. firejail-wrapped processes), so try to close the client instead
 				application:kill()
 			end
 		end)
 	else
-		-- no associated PID, try to close the client instead
 		application:kill()
 	end
 end
 
 
 function  logout:_close_all_apps(option)
-	-- graceful exit (apps closing) may be disabled by user settings
 	if not logout.style.graceful_shutdown then
 		logout:hide()
 		option.callback()
 		return
 	end
 
-	-- apps closing
 	for _, application in ipairs(client.get()) do
-		-- clients owned by the same process might vanish upon the first SIGTERM
-		-- during list iteration, so we only handle those which are still valid
 		if application.valid then gracefully_close(application) end
 	end
 
-	-- execute the given logout option after the kill timeout
 	self.countdown:start(option)
 end
 
--- Define all available logout options to be displayed
--- maybe overwritten by user configs via logout:set_entries()
--- order specified will determine order of the displayed buttons
------------------------------------------------------------------------------------------------------------------------
 logout.entries = {
 	{   -- Logout
 		callback   = function() awesome.quit() end,
@@ -123,15 +96,11 @@ logout.entries = {
 	},
 }
 
--- Logout screen control functions
------------------------------------------------------------------------------------------------------------------------
 function logout.action.select_by_id(id)
 	local new_option = logout.options[id]
 	if not new_option then return end
 
-	-- if already selected
 	if new_option == logout.selected then
-		-- activate button on double selection
 		if logout.style.double_key_activation then new_option:execute() end
 		return
 	end
@@ -158,8 +127,6 @@ function logout.action.hide()
 	logout:hide()
 end
 
--- Logout screen keygrabber keybindings
---------------------------------------------------------------------------------
 logout.keys = {
 	{
 		{ }, "Escape", logout.action.hide,
@@ -187,21 +154,16 @@ logout.keys = {
 		  keyset = { "1", "2", "3", "4", "5", "6", "7", "8", "9" } }
 	}
 }
--- add number shortcuts for the ordered options
+
 for i = 1, 9 do
 	table.insert(logout.keys, {
 		{ }, tostring(i), function()
 			logout.action.select_by_id(i)
 		end,
-		{ } -- don't show in redtip
+		{ }
 	})
 end
 
--- Logout screen UI build functions
------------------------------------------------------------------------------------------------------------------------
-
--- Button for layout option
---------------------------------------------------------------------------------
 function logout:_make_button(icon_name)
 	local icon = self.style.icons[icon_name] or utils.base.placeholder({ txt = "?" })
 
@@ -217,8 +179,6 @@ function logout:_make_button(icon_name)
 	return iconbox
 end
 
--- Label for layout option
---------------------------------------------------------------------------------
 function logout:_make_label(title)
 	local label = wibox.widget.textbox(title)
 	label.font = self.style.label_font
@@ -228,16 +188,12 @@ function logout:_make_label(title)
 	return label
 end
 
--- Add new logout option to widget
------------------------------------------------------------------------------------------------------------------------
 function logout:add_option(id, action)
 
-	-- creating option structure
 	local option = { id = id, close_apps = action.close_apps, callback = action.callback, name = action.label }
 	option.button = logout:_make_button(action.icon_name)
 	option.label = logout:_make_label(action.label)
 
-	-- logout option methods
 	function option:select()
 		if logout.selected then logout.selected:deselect() end
 		self.button.bg = logout.style.color.main
@@ -259,59 +215,44 @@ function logout:add_option(id, action)
 		end
 	end
 
-	-- binding mouse to option visual
 	option.button:connect_signal('mouse::enter', function() option:select() end)
 	option.button:connect_signal('mouse::leave', function() option:deselect() end)
 	option.button:connect_signal('button::release', function() option:execute() end)
 
-	-- placing option visual to main logout widget
 	local button_with_label = wibox.layout.fixed.vertical()
 	button_with_label.spacing = self.style.text_margin
 	button_with_label:add(option.button)
 	button_with_label:add(option.label)
 	self.option_layout:add(button_with_label)
 
-	-- putting option to logout inner structure
 	table.insert(self.options, option)
 end
 
--- Main functions
------------------------------------------------------------------------------------------------------------------------
 function logout:init()
 
-    -- Style and base layout structure
-    ------------------------------------------------------------
     self.style = default_style()
     self.options = {}
 
-    -- buttons layout
     self.option_layout = wibox.layout.fixed.horizontal()
     self.option_layout.spacing = self.style.button_spacing
 
-    -- shutdown counter label
     self.counter = wibox.widget.textbox("")
     self.counter.font = self.style.counter_font
     self.counter.align = "center"
     self.counter.valign = "top"
 
-    -- info text label
     self.info_text = wibox.widget.textbox("")
     self.info_text.font = self.style.info_font
     self.info_text.align = "center"
     self.info_text.valign = "top"
 
-    -- main layout
     local base_layout = wibox.layout.stack()
     base_layout:add(wibox.container.place(self.option_layout))
     base_layout:add(wibox.container.margin(self.counter, 0, 0, self.style.counter_top_margin))
-    base_layout:add(wibox.container.margin(self.info_text, 0, 0, self.style.counter_top_margin * 0.8 ))
+    base_layout:add(wibox.container.margin(self.info_text, 0, 0, screen.primary.geometry.height - screen.primary.geometry.height / 3 ))
 
-    -- Prepare all defined logout options
-    ------------------------------------------------------------
     for id, action in ipairs(self.entries) do self:add_option(id, action) end
 
-    -- Create keygrabber
-    ------------------------------------------------------------
     self.keygrabber = function(mod, key, event)
         if event == "press" then
             for _, k in ipairs(self.keys) do
@@ -320,8 +261,6 @@ function logout:init()
         end
     end
 
-    -- Main wibox
-    ------------------------------------------------------------
     self.wibox = wibox({ widget = base_layout })
     self.wibox.type = 'splash'
     self.wibox.ontop = true
@@ -336,17 +275,13 @@ function logout:init()
         )
     )
 
-    -- Graceful shutdown counter
-    ------------------------------------------------------------
     local countdown = {}
-    -- Should this pattern be moved to theme variables?
     countdown.pattern = '<span color="%s">%s</span> in %s... Closing apps (%s left).'
 
     countdown.timer = gears.timer({
         timeout = 1,
         callback = function()
             if countdown.delay <= 1 then
-                --logout:hide() -- do we need hide?
                 countdown.callback()
                 countdown:stop()
             else
@@ -366,7 +301,7 @@ function logout:init()
 	})
 	countdown.timertips:start()
     function countdown:label(seconds)
-        local active_apps = client.get() -- not sure how accurate it is
+        local active_apps = client.get()
         logout.counter:set_markup(string.format(
             self.pattern,
             logout.style.color.main, self.option_name, seconds, #active_apps
@@ -389,14 +324,13 @@ function logout:init()
 
     self.countdown = countdown
 
-    -- Update info text with current on-time, last start time, and user details
 	logout:tips()
 end
 
 function logout:tips()
-    local currentTime = "UpTime: " .. os.capture("uptime | cut -d ' ' -f 2")
+    local currentTime = "UpTime: " .. os.capture("uptime --pretty | sed -e 's/up //g' -e 's/ days/d/g' -e 's/ day/d/g' -e 's/ hours/h/g' -e 's/ hour/h/g' -e 's/ minutes/m/g' -e 's/, / /g'")
     local lastStartTime = "BootTime: " .. os.capture("systemd-analyze | cut -d ' ' -f 16")
-    local userDetails = "User: " .. os.getenv("USER") -- Replace with actual user details
+    local userDetails = "User: " .. os.getenv("USER")
     self:update_info_text(currentTime, lastStartTime, userDetails)
 end
 
@@ -406,16 +340,13 @@ function os.capture(cmd)
     f:close()
     return output
 end
--- Update the info text content
+
 function logout:update_info_text(currentTime, lastStartTime, userDetails)
     local info = string.format("%s%s%s",
         currentTime, lastStartTime, userDetails)
     self.info_text:set_markup(info)
 end
 
-
--- Hide the logout screen without executing any action
---------------------------------------------------------------------------------
 function logout:hide()
 	awful.keygrabber.stop(self.keygrabber)
 	self.countdown:stop()
@@ -425,8 +356,6 @@ function logout:hide()
 	self.wibox.visible = false
 end
 
--- Display the logout screen
---------------------------------------------------------------------------------
 function logout:show()
 	if not self.wibox then self:init() end
 	logout:tips()
@@ -440,8 +369,6 @@ function logout:show()
 	awful.keygrabber.run(self.keygrabber)
 end
 
--- Logout widget setup methods
---------------------------------------------------------------------------------
 function logout:set_keys(keys)
 	self.keys = keys
 end
@@ -450,6 +377,4 @@ function logout:set_entries(entries)
 	self.entries = entries
 end
 
--- End
------------------------------------------------------------------------------------------------------------------------
 return logout

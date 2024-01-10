@@ -1,0 +1,56 @@
+#!/bin/zsh
+# Search in memory and change it
+# Deps
+    check_install_dependency() {
+        local dependency=$1
+        local install_command=$2
+        if ! pacman -Q $dependency &> /dev/null; then
+            echo "$dependency could not be found, installing it."
+            eval $install_command
+        fi
+    }
+    check_install_dependency "gdb" "sudo pacman -Sy --needed --noconfirm  gdb"
+    check_install_dependency "fzf" "sudo pacman -Sy --needed --noconfirm fzf"
+    check_install_dependency "scanmem" "sudo pacman -Sy --needed --noconfirm scanmem"
+# Fzf alias
+    alias fzf='fzf --color=16'
+    alias fzf-tmux='fzf-tmux --color=16'
+    fzf-splitted () { # fzf splitted view adaptation for tmux
+        if [[ -n "$TMUX" ]]; then 
+        fzf --reverse --ansi "$@"
+        else 
+        fzf-tmux -x --height ${FZF_TMUX_HEIGHT:-40%} --reverse --cycle --ansi "$@"
+        fi 
+    }
+# List of processes to choose from using FZF
+    process=$(ps -eo comm= | sort -u | fzf-splitted --prompt "Select a process to scan and modify: ")
+    process=$(pgrep "$process")
+# Check if a process was selected
+    if [ -z "$process" ]; then
+        echo "No process selected. Exiting."
+        exit 1
+    fi
+command=$(echo -e "search\nwrite\ninject\n" | fzf-splitted --prompt "Commands: ")
+case $command in
+    "search")
+        vared -p 'Input num to scan in mem -> ' -c num
+        command="$num"
+        sudo scanmem -p "$process" -c "$command"
+        ;;
+    "write")
+        type=$(echo -e "i8\ni16\n32\n64\nf32\nf64\nbytearray\nstring" | fzf-splitted --prompt "Input type :  -> ")
+        vared -p 'Input addres -> ' -c addr
+        vared -p 'Input value -> ' -c val
+        command="write $type $addr $val"
+        sudo scanmem -p "$process" -c "$command"
+        ;;
+    "inject")
+        vared -p 'Input addres -> ' -c num
+        command="disassemble /m 0x$num"
+        sudo gdb -p "$process" --silent -ex "$command"
+        ;;
+    *)
+        echo "error"
+        exit 1
+        ;;
+esac
