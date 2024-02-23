@@ -1,6 +1,5 @@
 {
     "general": {
-        "publicServers": true,
         "voiceDisconnect": false,
         "showToasts": true,
         "mediaKeys": false
@@ -11,7 +10,7 @@
     },
     "customcss": {
         "customcss": true,
-        "liveUpdate": false,
+        "liveUpdate": true,
         "openAction": "settings"
     },
     "editor": {
@@ -33,6 +32,6 @@
         "debuggerHotkey": true,
         "reactDevTools": true,
         "inspectElement": true,
-        "devToolsWarning": false
+        "devToolsWarning": true
     }
 }

@@ -2,7 +2,7 @@
  * @name ThemeRepo
  * @author DevilBro
  * @authorId 278543574059057154
- * @version 2.5.0
+ * @version 2.5.5
  * @description Allows you to download all Themes from BD's Website within Discord
  * @invite Jx3TjNS
  * @donate https://www.paypal.me/MircoWittrien
@@ -25,9 +25,14 @@ module.exports = (_ => {
 		getDescription () {return `The Library Plugin needed for ${this.name} is missing. Open the Plugin Settings to download it. \n\n${this.description}`;}
 		
 		downloadLibrary () {
-			require("request").get("https://mwittrien.github.io/BetterDiscordAddons/Library/0BDFDB.plugin.js", (e, r, b) => {
-				if (!e && b && r.statusCode == 200) require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0BDFDB.plugin.js"), b, _ => BdApi.showToast("Finished downloading BDFDB Library", {type: "success"}));
-				else BdApi.alert("Error", "Could not download BDFDB Library Plugin. Try again later or download it manually from GitHub: https://mwittrien.github.io/downloader/?library");
+			BdApi.Net.fetch("https://mwittrien.github.io/BetterDiscordAddons/Library/0BDFDB.plugin.js").then(r => {
+				if (!r || r.status != 200) throw new Error();
+				else return r.text();
+			}).then(b => {
+				if (!b) throw new Error();
+				else return require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0BDFDB.plugin.js"), b, _ => BdApi.showToast("Finished downloading BDFDB Library", {type: "success"}));
+			}).catch(error => {
+				BdApi.alert("Error", "Could not download BDFDB Library Plugin. Try again later or download it manually from GitHub: https://mwittrien.github.io/downloader/?library");
 			});
 		}
 		
@@ -60,7 +65,7 @@ module.exports = (_ => {
 		
 		var list;
 		
-		var loading, cachedThemes, grabbedThemes, generatorThemes, updateInterval;
+		var loading, cachedThemes, grabbedThemes, generatorThemes, updateInterval, errorState;
 		var searchString, searchTimeout, forcedSort, forcedOrder, showOnlyOutdated;
 		var updateGeneratorTimeout, forceRerenderGenerator, nativeCSS, nativeCSSvars;
 		
@@ -95,8 +100,8 @@ module.exports = (_ => {
 			NAME:			"Name",
 			AUTHORNAME:		"Author",
 			VERSION:		"Version",
-			DESCRIPTION:	"Description",
-			RELEASEDATE:	"Release Date",
+			DESCRIPTION:		"Description",
+			RELEASEDATE:		"Release Date",
 			STATE:			"Update State",
 			DOWNLOADS:		"Downloads",
 			LIKES:			"Likes",
@@ -134,10 +139,10 @@ module.exports = (_ => {
 						state: state
 					});
 				}).filter(n => n);
-				if (!this.props.updated)		themes = themes.filter(theme => theme.state != themeStates.INSTALLED);
-				if (!this.props.outdated)		themes = themes.filter(theme => theme.state != themeStates.OUTDATED);
-				if (!this.props.downloadable)	themes = themes.filter(theme => theme.state != themeStates.DOWNLOADABLE);
-				if (searchString) 	{
+				if (!this.props.updated) themes = themes.filter(theme => theme.state != themeStates.INSTALLED);
+				if (!this.props.outdated) themes = themes.filter(theme => theme.state != themeStates.OUTDATED);
+				if (!this.props.downloadable) themes = themes.filter(theme => theme.state != themeStates.DOWNLOADABLE);
+				if (searchString) {
 					let usedSearchString = searchString.toUpperCase();
 					let spacelessUsedSearchString = usedSearchString.replace(/\s/g, "");
 					themes = themes.filter(theme => theme.search.indexOf(usedSearchString) > -1 || theme.search.indexOf(spacelessUsedSearchString) > -1);
@@ -184,6 +189,17 @@ module.exports = (_ => {
 				if (!this.props.tab) this.props.tab = "Themes";
 				
 				const entries = (!loading.is && grabbedThemes.length ? this.filterThemes() : []);
+				
+				const emptyState = errorState ? {
+					lightSrc: "/assets/d6dfb89ab06b62044dbb.svg",
+					darkSrc: "/assets/8eeb59bba0a61cbffc41.svg",
+					text: "Could not load Theme Store due to an Issue with the BD Website"
+				} : !entries.length && !this.props.updated && !this.props.outdated && !this.props.downloadable ? {
+					text: `You disabled all Filter Options in the "${BDFDB.LanguageUtils.LanguageStrings.SETTINGS}" Tab`
+				} : !entries.length && searchString ? {
+					lightSrc: "/assets/75081bdaad2d359c1469.svg",
+					darkSrc: "/assets/45cd76fed34c8e398cc8.svg"
+				} : !entries.length ? {} : null;
 				
 				if (forceRerenderGenerator && this.props.tab == "Generator") BDFDB.TimeUtils.timeout(_ => {
 					forceRerenderGenerator = false;
@@ -315,7 +331,7 @@ module.exports = (_ => {
 												children: `${BDFDB.LanguageUtils.LibraryStringsFormat("loading", "Theme Repo")} - ${BDFDB.LanguageUtils.LibraryStrings.please_wait}`
 											})
 										]
-									}) : BDFDB.ReactUtils.createElement("div", {
+									}) : emptyState ? BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.EmptyStateImage, emptyState) : BDFDB.ReactUtils.createElement("div", {
 										className: BDFDB.disCN.discoverycards,
 										children: entries.map(theme => BDFDB.ReactUtils.createElement(RepoCardComponent, {
 											data: theme
@@ -442,7 +458,7 @@ module.exports = (_ => {
 									render: false,
 									children: [
 										BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.SettingsPanelList, {
-											title: "Show following Themes",
+											title: "Shows following Themes",
 											children: Object.keys(_this.defaults.filters).map(key => BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.SettingsSaveItem, {
 												type: "Switch",
 												plugin: _this,
@@ -632,13 +648,13 @@ module.exports = (_ => {
 														this.props.downloading = true;
 														let loadingToast = BDFDB.NotificationUtils.toast(`${BDFDB.LanguageUtils.LibraryStringsFormat("loading", this.props.data.name)} - ${BDFDB.LanguageUtils.LibraryStrings.please_wait}`, {timeout: 0, ellipsis: true});
 														let autoloadKey = this.props.data.state == themeStates ? "startUpdated" : "startDownloaded";
-														BDFDB.DiscordUtils.requestFileData(this.props.data.rawSourceUrl, (error, buffer) => {
-															if (error || !buffer) {
+														BDFDB.LibraryRequires.request(this.props.data.rawSourceUrl, (error, response, body) => {
+															if (error || !body) {
 																delete this.props.downloading;
 																loadingToast.close();
 																BDFDB.NotificationUtils.toast(BDFDB.LanguageUtils.LibraryStringsFormat("download_fail", `Theme "${this.props.data.name}"`), {type: "danger"});
 															}
-															else list.createThemeFile(this.props.data.name, this.props.data.rawSourceUrl.split("/").pop(), Buffer.from(buffer).toString(), autoloadKey).then(error2 => {
+															else list.createThemeFile(this.props.data.name, this.props.data.rawSourceUrl.split("/").pop(), body, autoloadKey).then(error2 => {
 																delete this.props.downloading;
 																loadingToast.close();
 																if (!error2) {
@@ -725,8 +741,8 @@ module.exports = (_ => {
 						startUpdated:		{value: false, 	autoload: true,		description: "Starts updated Themes after Download"}
 					},
 					filters: {
-						updated: 			{value: true,	description: "Updated"},
-						outdated:			{value: true, 	description: "Outdated"},
+						updated: 		{value: true,	description: "Updated"},
+						outdated:		{value: true, 	description: "Outdated"},
 						downloadable:		{value: true, 	description: "Downloadable"},
 					}
 				};
@@ -885,16 +901,15 @@ module.exports = (_ => {
 								});
 							}
 							
-							BDFDB.DiscordUtils.requestFileData("https://mwittrien.github.io/BetterDiscordAddons/Plugins/ThemeRepo/_res/GeneratorList.txt", (error, buffer) => {
-								let body = !error && buffer && Buffer.from(buffer).toString();
-								if (body) for (let id of body.replace(/[\r\t]/g, "").split(" ").map(n => parseInt(n)).filter(n => n != null)) {
+							BDFDB.LibraryRequires.request("https://mwittrien.github.io/BetterDiscordAddons/Plugins/ThemeRepo/_res/GeneratorList.txt", (error, response, body) => {
+								if (!error && body) for (let id of body.replace(/[\r\t]/g, "").split(" ").map(n => parseInt(n)).filter(n => n != null)) {
 									let theme = grabbedThemes.find(t => t.id == id);
 									if (theme) generatorThemes.push(theme);
 								}
 							});
 							
-							BDFDB.DiscordUtils.requestFileData(document.querySelector("head link[rel='stylesheet'][integrity]").href, (error, buffer) => {
-								let nativeCSS = !error && buffer && Buffer.from(buffer).toString();
+							BDFDB.LibraryRequires.request(document.querySelector("head link[rel='stylesheet'][href*='assets/app.'], body link[rel='stylesheet'][href*='assets/app.']").href, (error, response, body) => {
+								let nativeCSS = !error && body;
 								if (nativeCSS) {
 									let theme = BDFDB.DiscordUtils.getTheme();
 									let vars = (nativeCSS.split(`.${theme}{`)[1] || "").split("}")[0];
@@ -919,41 +934,38 @@ module.exports = (_ => {
 						delete theme.release_date;
 						delete theme.latest_source_url;
 						delete theme.thumbnail_url;
-						BDFDB.DiscordUtils.requestFileData(theme.rawSourceUrl, (error, buffer) => {
-							if (error || !buffer) theme.failed = true;
+						BDFDB.LibraryRequires.request(theme.rawSourceUrl, (error, response, body) => {
+							if (error || !body || body.indexOf("404: Not Found") == 0) theme.failed = true;
 							else {
-								let body = Buffer.from(buffer).toString();
-								if (body && body.indexOf("404: Not Found") != 0) {
-									const META = body.split("*/")[0];
-									theme.name = BDFDB.StringUtils.upperCaseFirstChar((/@name\s+([^\t^\r^\n]+)|\/\/\**META.*["']name["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || theme.name || "");
-									theme.authorname = (/@author\s+(.+)|\/\/\**META.*["']author["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || theme.author.display_name || theme.author;
-									const version = (/@version\s+(.+)|\/\/\**META.*["']version["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1];
-									if (version) theme.version = version;
-									if (theme.version) {
-										const installedTheme = this.getInstalledTheme(theme);
-										if (installedTheme && this.compareVersions(version, this.getString(installedTheme.version))) outdatedEntries++;
-									}
-									let text = body.trim();
-									let hasMETAline = text.replace(/\s/g, "").indexOf("//META{"), newMeta = "";
-									if (hasMETAline < 20 && hasMETAline > -1) {
-										let i = 0, j = 0, metaString = "";
-										try {
-											for (let c of `{${text.split("{").slice(1).join("{")}`) {
-												metaString += c;
-												if (c == "{") i++;
-												else if (c == "}") j++;
-												if (i > 0 && i == j) break;
-											}
-											let metaObj = JSON.parse(metaString);
-											newMeta = "/**\n";
-											for (let key in metaObj) newMeta += ` * @${key} ${metaObj[key]}\n`;
-											newMeta += "*/";
-										}
-										catch (err) {newMeta = "";}
-									}
-									theme.fullCSS = [newMeta, newMeta ? text.split("\n").slice(1).join("\n") : text].filter(n => n).join("\n");
-									theme.css = (hasMETAline < 20 && hasMETAline > -1 ? text.split("\n").slice(1).join("\n") : text).replace(/[\r|\n|\t]/g, "");
+								const META = body.split("*/")[0];
+								theme.name = BDFDB.StringUtils.upperCaseFirstChar((/@name\s+([^\t^\r^\n]+)|\/\/\**META.*["']name["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || theme.name || "");
+								theme.authorname = (/@author\s+(.+)|\/\/\**META.*["']author["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || theme.author.display_name || theme.author;
+								const version = (/@version\s+(.+)|\/\/\**META.*["']version["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1];
+								if (version) theme.version = version;
+								if (theme.version) {
+									const installedTheme = this.getInstalledTheme(theme);
+									if (installedTheme && this.compareVersions(version, this.getString(installedTheme.version))) outdatedEntries++;
 								}
+								let text = body.trim();
+								let hasMETAline = text.replace(/\s/g, "").indexOf("//META{"), newMeta = "";
+								if (hasMETAline < 20 && hasMETAline > -1) {
+									let i = 0, j = 0, metaString = "";
+									try {
+										for (let c of `{${text.split("{").slice(1).join("{")}`) {
+											metaString += c;
+											if (c == "{") i++;
+											else if (c == "}") j++;
+											if (i > 0 && i == j) break;
+										}
+										let metaObj = JSON.parse(metaString);
+										newMeta = "/**\n";
+										for (let key in metaObj) newMeta += ` * @${key} ${metaObj[key]}\n`;
+										newMeta += "*/";
+									}
+									catch (err) {newMeta = "";}
+								}
+								theme.fullCSS = [newMeta, newMeta ? text.split("\n").slice(1).join("\n") : text].filter(n => n).join("\n");
+								theme.css = (hasMETAline < 20 && hasMETAline > -1 ? text.split("\n").slice(1).join("\n") : text).replace(/[\r|\n|\t]/g, "");
 								if (!cachedThemes.includes(theme.id)) newEntries++;
 							}
 							
@@ -968,7 +980,7 @@ module.exports = (_ => {
 					}
 				};
 				
-				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/themes", (error, response, body) => {
+				BDFDB.TimeUtils.timeout(_ => BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/themes", {bdVersion: true}, (error, response, body) => {
 					if (!error && body && response.statusCode == 200) try {
 						grabbedThemes = BDFDB.ArrayUtils.keySort(JSON.parse(body).filter(n => n), "name");
 						
@@ -999,9 +1011,16 @@ module.exports = (_ => {
 						for (let i = 0; i <= 20; i++) checkTheme();
 					}
 					catch (err) {BDFDB.NotificationUtils.toast("Failed to load Theme Store", {type: "danger"});}
-					if (response && response.statusCode == 403) BDFDB.NotificationUtils.toast("Failed to fetch Theme Store from the Website Api due to DDoS Protection", {type: "danger"});
-					else if (response && response.statusCode == 404) BDFDB.NotificationUtils.toast("Failed to fetch Theme Store from the Website Api due to Connection Issue", {type: "danger"});
-				});
+					let status = {}; 
+					if (response && response.statusCode == 403) status = {code: response.statusCode, reason: " due to DDoS Protection"};
+					else if (response && response.statusCode == 404) status = {code: response.statusCode, reason: " due to DDoS Protection"};
+					else if (response && response.statusCode == 502) status = {code: response.statusCode, reason: ", because the API is down"};
+					if (status.code) {
+						BDFDB.NotificationUtils.toast("Failed to fetch Theme Store from the Website API" + status.reason, {type: "danger"});
+						errorState = status.code;
+					}
+					else errorState = null;
+				}), 10000);
 			}
 
 			getLoadingTooltipText () {
@@ -1033,7 +1052,7 @@ module.exports = (_ => {
 			}
 
 			checkForNewThemes () {
-				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/themes", (error, response, body) => {
+				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/themes", {bdVersion: true}, (error, response, body) => {
 					if (!error && body) try {
 						if (JSON.parse(body).filter(n => n).length != grabbedThemes.length) {
 							loading = {is: false, timeout: null, amount: 0};

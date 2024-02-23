@@ -2,7 +2,7 @@
  * @name PluginRepo
  * @author DevilBro
  * @authorId 278543574059057154
- * @version 2.5.1
+ * @version 2.5.5
  * @description Allows you to download all Plugins from BD's Website within Discord
  * @invite Jx3TjNS
  * @donate https://www.paypal.me/MircoWittrien
@@ -14,9 +14,7 @@
 
 module.exports = (_ => {
 	const changeLog = {
-		"fixed": {
-			"Outdated for broken Plugins": "No longer shows broken Plugins as outdated"
-		}
+		
 	};
 
 	return !window.BDFDB_Global || (!window.BDFDB_Global.loaded && !window.BDFDB_Global.started) ? class {
@@ -27,9 +25,14 @@ module.exports = (_ => {
 		getDescription () {return `The Library Plugin needed for ${this.name} is missing. Open the Plugin Settings to download it. \n\n${this.description}`;}
 		
 		downloadLibrary () {
-			require("request").get("https://mwittrien.github.io/BetterDiscordAddons/Library/0BDFDB.plugin.js", (e, r, b) => {
-				if (!e && b && r.statusCode == 200) require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0BDFDB.plugin.js"), b, _ => BdApi.showToast("Finished downloading BDFDB Library", {type: "success"}));
-				else BdApi.alert("Error", "Could not download BDFDB Library Plugin. Try again later or download it manually from GitHub: https://mwittrien.github.io/downloader/?library");
+			BdApi.Net.fetch("https://mwittrien.github.io/BetterDiscordAddons/Library/0BDFDB.plugin.js").then(r => {
+				if (!r || r.status != 200) throw new Error();
+				else return r.text();
+			}).then(b => {
+				if (!b) throw new Error();
+				else return require("fs").writeFile(require("path").join(BdApi.Plugins.folder, "0BDFDB.plugin.js"), b, _ => BdApi.showToast("Finished downloading BDFDB Library", {type: "success"}));
+			}).catch(error => {
+				BdApi.alert("Error", "Could not download BDFDB Library Plugin. Try again later or download it manually from GitHub: https://mwittrien.github.io/downloader/?library");
 			});
 		}
 		
@@ -62,7 +65,7 @@ module.exports = (_ => {
 		
 		var list;
 		
-		var loading, cachedPlugins, grabbedPlugins, updateInterval;
+		var loading, cachedPlugins, grabbedPlugins, updateInterval, errorState;
 		var searchString, searchTimeout, forcedSort, forcedOrder, showOnlyOutdated;
 		
 		var favorites = [];
@@ -96,8 +99,8 @@ module.exports = (_ => {
 			NAME:			"Name",
 			AUTHORNAME:		"Author",
 			VERSION:		"Version",
-			DESCRIPTION:	"Description",
-			RELEASEDATE:	"Release Date",
+			DESCRIPTION:		"Description",
+			RELEASEDATE:		"Release Date",
 			STATE:			"Update State",
 			DOWNLOADS:		"Downloads",
 			LIKES:			"Likes",
@@ -135,10 +138,10 @@ module.exports = (_ => {
 						state: state
 					});
 				}).filter(n => n);
-				if (!this.props.updated)		plugins = plugins.filter(plugin => plugin.state != pluginStates.INSTALLED);
-				if (!this.props.outdated)		plugins = plugins.filter(plugin => plugin.state != pluginStates.OUTDATED);
-				if (!this.props.downloadable)	plugins = plugins.filter(plugin => plugin.state != pluginStates.DOWNLOADABLE);
-				if (searchString) 	{
+				if (!this.props.updated) plugins = plugins.filter(plugin => plugin.state != pluginStates.INSTALLED);
+				if (!this.props.outdated) plugins = plugins.filter(plugin => plugin.state != pluginStates.OUTDATED);
+				if (!this.props.downloadable) plugins = plugins.filter(plugin => plugin.state != pluginStates.DOWNLOADABLE);
+				if (searchString) {
 					let usedSearchString = searchString.toUpperCase();
 					let spacelessUsedSearchString = usedSearchString.replace(/\s/g, "");
 					plugins = plugins.filter(plugin => plugin.search.indexOf(usedSearchString) > -1 || plugin.search.indexOf(spacelessUsedSearchString) > -1);
@@ -153,6 +156,16 @@ module.exports = (_ => {
 				if (!this.props.tab) this.props.tab = "Plugins";
 				
 				const entries = (!loading.is && grabbedPlugins.length ? this.filterPlugins() : []);
+				const emptyState = errorState ? {
+					lightSrc: "/assets/d6dfb89ab06b62044dbb.svg",
+					darkSrc: "/assets/8eeb59bba0a61cbffc41.svg",
+					text: "Could not load Plugin Store due to an Issue with the BD Website"
+				} : !entries.length && !this.props.updated && !this.props.outdated && !this.props.downloadable ? {
+					text: `You disabled all Filter Options in the "${BDFDB.LanguageUtils.LanguageStrings.SETTINGS}" Tab`
+				} : !entries.length && searchString ? {
+					lightSrc: "/assets/75081bdaad2d359c1469.svg",
+					darkSrc: "/assets/45cd76fed34c8e398cc8.svg"
+				} : !entries.length ? {} : null;
 				
 				return BDFDB.ReactUtils.createElement("div", {
 					className: BDFDB.disCN._repo,
@@ -279,7 +292,7 @@ module.exports = (_ => {
 												children: `${BDFDB.LanguageUtils.LibraryStringsFormat("loading", "Plugin Repo")} - ${BDFDB.LanguageUtils.LibraryStrings.please_wait}`
 											})
 										]
-									}) : BDFDB.ReactUtils.createElement("div", {
+									}) : emptyState ? BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.EmptyStateImage, emptyState) : BDFDB.ReactUtils.createElement("div", {
 										className: BDFDB.disCN.discoverycards,
 										children: entries.map(plugin => BDFDB.ReactUtils.createElement(RepoCardComponent, {
 											data: plugin
@@ -292,7 +305,7 @@ module.exports = (_ => {
 									render: false,
 									children: [
 										BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.SettingsPanelList, {
-											title: "Show following Plugins",
+											title: "Shows following Plugins",
 											children: Object.keys(_this.defaults.filters).map(key => BDFDB.ReactUtils.createElement(BDFDB.LibraryComponents.SettingsSaveItem, {
 												type: "Switch",
 												plugin: _this,
@@ -486,13 +499,13 @@ module.exports = (_ => {
 														this.props.downloading = true;
 														let loadingToast = BDFDB.NotificationUtils.toast(`${BDFDB.LanguageUtils.LibraryStringsFormat("loading", this.props.data.name)} - ${BDFDB.LanguageUtils.LibraryStrings.please_wait}`, {timeout: 0, ellipsis: true});
 														let autoloadKey = this.props.data.state == pluginStates.OUTDATED ? "startUpdated" : "startDownloaded";
-														BDFDB.DiscordUtils.requestFileData(this.props.data.rawSourceUrl, (error, buffer) => {
-															if (error || !buffer) {
+														BDFDB.LibraryRequires.request(this.props.data.rawSourceUrl, (error, response, body) => {
+															if (error || !body) {
 																delete this.props.downloading;
 																loadingToast.close();
 																BDFDB.NotificationUtils.toast(BDFDB.LanguageUtils.LibraryStringsFormat("download_fail", `Plugin "${this.props.data.name}"`), {type: "danger"});
 															}
-															else BDFDB.LibraryRequires.fs.writeFile(BDFDB.LibraryRequires.path.join(BDFDB.BDUtils.getPluginsFolder(), this.props.data.rawSourceUrl.split("/").pop()), Buffer.from(buffer).toString(), error2 => {
+															else BDFDB.LibraryRequires.fs.writeFile(BDFDB.LibraryRequires.path.join(BDFDB.BDUtils.getPluginsFolder(), this.props.data.rawSourceUrl.split("/").pop()), body, error2 => {
 																delete this.props.downloading;
 																loadingToast.close();
 																if (error2) BDFDB.NotificationUtils.toast(BDFDB.LanguageUtils.LibraryStringsFormat("save_fail", `Plugin "${this.props.data.name}"`), {type: "danger"});
@@ -586,8 +599,8 @@ module.exports = (_ => {
 						startUpdated:		{value: false, 	autoload: true,		description: "Starts updated Plugins after Download"}
 					},
 					filters: {
-						updated: 			{value: true,	description: "Updated"},
-						outdated:			{value: true, 	description: "Outdated"},
+						updated: 		{value: true,	description: "Updated"},
+						outdated:		{value: true, 	description: "Outdated"},
 						downloadable:		{value: true, 	description: "Downloadable"},
 					}
 				};
@@ -758,20 +771,17 @@ module.exports = (_ => {
 						delete plugin.release_date;
 						delete plugin.latest_source_url;
 						delete plugin.thumbnail_url;
-						BDFDB.DiscordUtils.requestFileData(plugin.rawSourceUrl, (error, buffer) => {
-							if (error || !buffer) plugin.failed = true;
+						BDFDB.LibraryRequires.request(plugin.rawSourceUrl, (error, response, body) => {
+							if (error || !body || body.indexOf("404: Not Found") == 0) plugin.failed = true;
 							else {
-								let body = Buffer.from(buffer).toString();
-								if (body && body.indexOf("404: Not Found") != 0) {
-									const META = body.split("*/")[0];
-									plugin.name = BDFDB.StringUtils.upperCaseFirstChar((/@name\s+([^\t^\r^\n]+)|\/\/\**META.*["']name["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || plugin.name || "");
-									plugin.authorname = (/@author\s+(.+)|\/\/\**META.*["']author["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || plugin.author.display_name || plugin.author;
-									const version = (/@version\s+(.+)|\/\/\**META.*["']version["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1];
-									if (version) {
-										plugin.version = version;
-										const installedPlugin = this.getInstalledPlugin(plugin);
-										if (installedPlugin && this.compareVersions(version, this.getString(installedPlugin.plugin && installedPlugin.plugin.version || installedPlugin.version))) outdatedEntries++;
-									}
+								const META = body.split("*/")[0];
+								plugin.name = BDFDB.StringUtils.upperCaseFirstChar((/@name\s+([^\t^\r^\n]+)|\/\/\**META.*["']name["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || plugin.name || "");
+								plugin.authorname = (/@author\s+(.+)|\/\/\**META.*["']author["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1] || plugin.author.display_name || plugin.author;
+								const version = (/@version\s+(.+)|\/\/\**META.*["']version["']\s*:\s*["'](.+?)["']/i.exec(META) || []).filter(n => n)[1];
+								if (version) {
+									plugin.version = version;
+									const installedPlugin = this.getInstalledPlugin(plugin);
+									if (installedPlugin && this.compareVersions(version, this.getString(installedPlugin.plugin && installedPlugin.plugin.version || installedPlugin.version))) outdatedEntries++;
 								}
 								if (!cachedPlugins.includes(plugin.id)) newEntries++;
 							}
@@ -787,7 +797,7 @@ module.exports = (_ => {
 					}
 				};
 				
-				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/plugins", (error, response, body) => {
+				BDFDB.TimeUtils.timeout(_ => BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/plugins", {bdVersion: true}, (error, response, body) => {
 					if (!error && body && response.statusCode == 200) try {
 						grabbedPlugins = BDFDB.ArrayUtils.keySort(JSON.parse(body).filter(n => n), "name");
 						BDFDB.DataUtils.save(BDFDB.ArrayUtils.numSort(grabbedPlugins.map(n => n.id)).join(" "), this, "cached");
@@ -817,9 +827,16 @@ module.exports = (_ => {
 						for (let i = 0; i <= 20; i++) checkPlugin();
 					}
 					catch (err) {BDFDB.NotificationUtils.toast("Failed to load Plugin Store", {type: "danger"});}
-					if (response && response.statusCode == 403) BDFDB.NotificationUtils.toast("Failed to fetch Plugin Store from the Website Api due to DDoS Protection", {type: "danger"});
-					else if (response && response.statusCode == 404) BDFDB.NotificationUtils.toast("Failed to fetch Plugin Store from the Website Api due to Connection Issue", {type: "danger"});
-				});
+					let status = {}; 
+					if (response && response.statusCode == 403) status = {code: response.statusCode, reason: " due to DDoS Protection"};
+					else if (response && response.statusCode == 404) status = {code: response.statusCode, reason: " due to DDoS Protection"};
+					else if (response && response.statusCode == 502) status = {code: response.statusCode, reason: ", because the API is down"};
+					if (status.code) {
+						BDFDB.NotificationUtils.toast("Failed to fetch Plugin Store from the Website API" + status.reason, {type: "danger"});
+						errorState = status.code;
+					}
+					else errorState = null;
+				}), 10000);
 			}
 
 			getLoadingTooltipText () {
@@ -851,7 +868,7 @@ module.exports = (_ => {
 			}
 
 			checkForNewPlugins () {
-				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/plugins", (error, response, body) => {
+				BDFDB.LibraryRequires.request("https://api.betterdiscord.app/v1/store/plugins", {bdVersion: true}, (error, response, body) => {
 					if (!error && body) try {
 						if (JSON.parse(body).filter(n => n).length != grabbedPlugins.length) {
 							loading = {is: false, timeout: null, amount: 0};
