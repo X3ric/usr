@@ -88,6 +88,11 @@ loading_animation() {
           echo "Cange password samba"
           sudo smbpasswd -a $choice
         }
+      function installremap {
+        yay -S --quiet --noconfirm --needed input-remapper-git
+        sudo systemctl restart input-remapper
+        sudo systemctl enable input-remapper
+      }
       function installwine {
           mkdir -p $HOME/.local/share/wineprefixes/default
           sudo pacman -S --needed --noconfirm wine winetricks
@@ -353,12 +358,13 @@ while true; do
   elif [[ $menu_state -eq 4 ]]; then
     showlogo
     echo -e "                  \033[1m[INSTALLERS]\033[0m"
-    options=("Upgrade" "Picom" "Emacs" "Wine" "Ctpv" "Back")
+    options=("Upgrade" "Picom" "Remap" "Emacs"  "Wine" "Ctpv" "Back")
     selected_option=$(printf '%s\n' "${options[@]}" | fzf-tmux --prompt=" Find = " -x --color=16 --height ${FZF_TMUX_HEIGHT:-40%} -m --reverse --ansi)
     case $selected_option in
       "Upgrade") clear && yay -Syu --noconfirm || exit_flag=true ;;
-      "Emacs") clear && installemacs || exit_flag=true ;;
       "Picom") clear && installpicom || exit_flag=true ;;
+      "Emacs") clear && installemacs || exit_flag=true ;;
+      "Remap") clear && installremap || exit_flag=true ;;
       "Wine") clear && installwine || exit_flag=true ;;
       "Ctpv") clear && installctpv || exit_flag=true ;;
       "Back") menu_state=2 ;;
