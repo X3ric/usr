@@ -102,7 +102,6 @@
   alias walengine='WEBKIT_DISABLE_COMPOSITING_MODE=1 walengine'
   fi
   alias hosts='v /etc/hosts && sudo systemctl restart systemd-resolved.service && sudo systemd-resolve --flush-caches'
-  alias ftp='sftp'
   alias ftp-thunar='_ftp-thunar() { if [ -z $2 ]; then p=sftp; else p=$2; fi; thunar --daemon $p://$1 &!}; _ftp-thunar'
   # enables top menu but alt+\ "global hud" not work in it
   alias globalmenu-disable='UBUNTU_MENUPROXY=0'
