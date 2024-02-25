@@ -9,7 +9,8 @@ if sudo grep -- "$TCP_OPTION" "$XSERVERRC" &> /dev/null; then
     sudo sed -i 's/-nolisten/-listen/g' "$XSERVERRC"
     echo "Xorg server TCP listening enabled."
     echo "now start like ssh-server."
-    echo "and connect to it form client with ssh -X usr@ip"
+    echo "connect to it form client with ssh -X usr@ip"
+    echo "to get xorg use startxephyr awesome"
 else
     sudo sed -i 's/-listen/-nolisten/g' "$XSERVERRC"
     echo "Xorg server TCP listening disabled."
