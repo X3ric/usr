@@ -6,7 +6,7 @@ if [ -z "$NEOFETCH_RUNNED" ] && [ -n "$DISPLAY" ]; then
 fi
 CONFSIZE=$(du -sb "$HOME/.config/zsh" | awk '{print $1}') # shell config size
 eval $(thefuck --alias)
-setopt correct_all 
+setopt correct
 setopt appendhistory
 setopt autocd
 setopt cdablevars
@@ -42,7 +42,7 @@ command_not_found_handler() { # zsh handlers
   if [[ $CONFSIZE != $CONFSZ ]]; then
     source "$HOME/.config/zsh/.zshrc"
     if command -v "$1" >/dev/null 2>&1 || alias "$1" >/dev/null 2>&1 || functions "$1" >/dev/null 2>&1; then
-      zsh -ci "unsetopt correct_all;$@; exit"
+      zsh -ci "unsetopt correct;$@; exit"
       return 0
     fi
   else
@@ -68,5 +68,3 @@ if [[ -z $tty ]] ; then # tty promt
 else
   PS1='%F{green}['$USER'%F{yellow}@%F{blue}%~%F{green}]%F{reset}%# '
 fi
-
-eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
