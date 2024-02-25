@@ -53,6 +53,9 @@
   alias remove='sudo pacman -Rns'
   alias refresh='sudo pacman -Syy'
 # Custom tweaks
+  if command -v yarn &>/dev/null;then
+  alias yarn='yarn --use-yarnrc "$XDG_CONFIG_HOME/yarn/config"'
+  fi
   alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""
   alias hibernate='systemctl hibernate'
   alias rg='kitty +kitten hyperlinked_grep'
