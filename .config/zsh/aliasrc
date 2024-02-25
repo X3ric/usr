@@ -13,6 +13,8 @@
     alias -g NE='2> /dev/null'
     alias -g NUL='> /dev/null 2>&1'
   fi
+
+  alias code="code --extensions-dir \"$XDG_DATA_HOME/.config/Code - OSS/Extensions\""
 # Utils 
   alias torrent-get='aria2c'
   alias clipdir='pwd | xclip -rmlastnl'
@@ -53,6 +55,7 @@
   alias remove='sudo pacman -Rns'
   alias refresh='sudo pacman -Syy'
 # Custom tweaks
+  alias wget="wget --hsts-file=\"$XDG_CACHE_HOME/wget-hsts\""
   alias hibernate='systemctl hibernate'
   alias rg='kitty +kitten hyperlinked_grep'
   if command -v screen &>/dev/null;then
