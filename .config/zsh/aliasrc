@@ -73,7 +73,7 @@
   alias man='manx'
   alias help='man'
   alias lf='lfx'
-  if [[ ! -z $tty ]]; then
+  if [[ ! -z $tty && -z $SSH_TTY ]]; then
 	alias setfont='vtdirect setfont'
 	alias startx='vtdirect startx'
 	alias mpv='vtdirect mpv'
