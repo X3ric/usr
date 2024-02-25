@@ -94,7 +94,7 @@ loading_animation() {
         sudo systemctl enable input-remapper
         autostart="$HOME/.local/share/bin/autostart"
         if ! cat "$autostart" | grep input-remapper-control ;then
-          echo "input-remapper-control --command autoload &" >> "$autostart"
+          echo -e "input-remapper-control --command autoload &\n" >> "$autostart"
         fi
       }
       function installwine {
