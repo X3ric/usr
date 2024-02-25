@@ -1,0 +1,29 @@
+#!/bin/zsh -i
+# Roms Downloader from https://roms-download.com/ and retroarch install
+if ! command -v pipx &> /dev/null; then
+    sudo pacman -Sy python-pipx
+    pipx ensurepath
+fi
+if ! command -v kr &> /dev/null; then
+    pipx install kr-cli
+fi
+console=$(kr consoles | fzf-splitted --tac)
+echo "Search> \c"
+read input 
+rom=$(kr search $console $input -q | fzf-splitted)
+dir="$HOME/Downloads/roms/$console"
+mkdir -p "$dir" &> /dev/null
+echo "$rom" | head -n 1 | kr download -d "$dir"
+file=$(basename "$rom")
+cd "$dir"
+for archive in "$dir/$file"*; do
+    ex "$archive"
+    rm -rf "$archive"
+done
+if ! command -v retroarch &> /dev/null; then
+    sudo pacman -Sy retroarch retroarch-assets-xmb
+    echo -e "Insstalling all retroarch cores\n"
+    sudo pacman -Sy libretro-beetle-pce libretro-beetle-psx libretro-beetle-supergrafx libretro-blastem libretro-bsnes libretro-citra libretro-melonds libretro-dolphin libretro-flycast libretro-gambatte libretro-genesis-plus-gx libretro-kronos libretro-mame libretro-mesen libretro-mgba libretro-mupen64plus-next libretro-nestopia libretro-scummvm libretro-ppsspp libretro-retrodream libretro-sameboy libretro-shaders-slang libretro-snes9x libretro-yabause
+else
+    retroarch --scan-directory ~/Downloads/roms
+fi
