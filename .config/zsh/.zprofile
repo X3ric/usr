@@ -10,5 +10,7 @@ else
 		else
 			! $SCROLLBACK false && scrollback -c /bin/zsh && exec scrollback /bin/zsh
 		fi
+	else
+		export pts='true'
 	fi
 fi
