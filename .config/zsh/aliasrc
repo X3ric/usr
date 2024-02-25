@@ -118,6 +118,11 @@
   alias adb-keyevent='adb shell input keyevent'
   alias adb-keyevent-help='xdg-open https://developer.android.com/reference/android/view/KeyEvent NUL'
   fi
+# Fixes for gtk3-nocsd-git
+  alias libclear="LD_PRELOAD=\"\""
+  if command -v wine &>/dev/null;then
+  alias wine='libclear wine'
+  fi
 # Fast shortcuts
   alias zshrc='${=EDITOR} ~/.zshrc'
   alias aliasrc='${=EDITOR} ~/.config/zsh/aliasrc'
