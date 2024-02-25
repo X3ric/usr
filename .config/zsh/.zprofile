@@ -3,14 +3,15 @@ rm -rf $HOME/.cache/awesome/last-pos &>/dev/null
 if [[ $TTY == "/dev/tty1" ]]; then
 	startx
 else
-	if [[ $TTY == "/dev/tty*" ]]; then
+	if [[ ! -z $SSH_TTY ]]; then 
+		export tty='true'
+		return 0
+	else
 		export tty='true'
 		if ! command -v scrollback &>/dev/null; then	
 			[ ! -z "$HOME"/.local/share/bin/scrollback/ ] && cd "$HOME"/.local/share/bin/scrollback/ && make && sudo make install
 		else
 			! $SCROLLBACK false && scrollback -c /bin/zsh && exec scrollback /bin/zsh
 		fi
-	else
-		export pts='true'
 	fi
 fi
