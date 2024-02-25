@@ -49,7 +49,7 @@ command_not_found_handler() { # zsh handlers
     nyack "$@" || return 1
   fi
 }
-[[ -z $tty ]] && source /$HOME/.config/zsh/Internal/p10k.zsh
+[[ -z $tty && -z $SSH_TTY ]] && source /$HOME/.config/zsh/Internal/p10k.zsh
 source /$HOME/.config/zsh/Internal/async.plugin.zsh
 source /$HOME/.config/zsh/Internal/fzf-tab.plugin.zsh
 source /$HOME/.config/zsh/Internal/fzf-key-bindings.plugins.zsh
@@ -63,7 +63,7 @@ source /$HOME/.config/broot/launcher/bash/br
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null
 source /usr/share/autojump/autojump.zsh 2>/dev/null
-if [[ -z $tty ]] ; then # tty promt
+if [[ -z $tty && -z $SSH_TTY ]] ; then # tty promt
   source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
 else
   PS1='%F{green}['$USER'%F{yellow}@%F{blue}%~%F{green}]%F{reset}%# '
