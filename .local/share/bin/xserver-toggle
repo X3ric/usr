@@ -1,0 +1,11 @@
+#!/bin/sh
+# Local Shared xorg server toggle
+XSERVERRC="/etc/X11/xinit/xserverrc"
+TCP_OPTION="-nolisten"
+if sudo grep -- "$TCP_OPTION" "$XSERVERRC" &> /dev/null; then
+    sudo sed -i 's/-nolisten/-listen/g' "$XSERVERRC"
+    echo "Xorg server TCP listening enabled."
+else
+    sudo sed -i 's/-listen/-nolisten/g' "$XSERVERRC"
+    echo "Xorg server TCP listening disabled."
+fi
