@@ -2,6 +2,9 @@
 # Local Shared xorg server toggle
 XSERVERRC="/etc/X11/xinit/xserverrc"
 TCP_OPTION="-nolisten"
+if ! sudo grep -- "^X11Forwarding yes" /etc/ssh/sshd_config &> /dev/null; then
+    echo -e "AllowAgentForwarding yes\nAllowTcpForwarding yes\nX11Forwarding yes\nX11DisplayOffset 10\nX11UseLocalhost no" | sudo tee /etc/ssh/sshd_config
+fi
 if sudo grep -- "$TCP_OPTION" "$XSERVERRC" &> /dev/null; then
     sudo sed -i 's/-nolisten/-listen/g' "$XSERVERRC"
     echo "Xorg server TCP listening enabled."
