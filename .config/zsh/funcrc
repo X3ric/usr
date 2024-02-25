@@ -749,6 +749,10 @@ setkeymap() { # set keyboard layout
     fi
 }
 
+xev-input() { # Input in a readable way
+    xev | awk -F'[ )]+' '/^KeyPress/ { a[NR+2] } NR in a { printf "%-3s %s\n", $5, $8 }'
+}
+
 bookmarks() { # Bookmarks menu select marks
     CacheFile="${XDG_CACHE_HOME:-$HOME/.cache}/bookmarks.cache"
     current_user=$(whoami)
