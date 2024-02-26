@@ -231,12 +231,12 @@ picom-toggle() { # Toggle picom
     fi
 }
 
-nc-action() { # Send or Listen packets
+nc-cli() { # Send or Listen packets
     local action="$1"
     case "$action" in
         "listen")
             if [ "$#" -ne 3 ]; then
-                echo "Usage: nc-action listen <IP> <PORT>" >&2
+                echo "Usage: nc-cli listen <IP> <PORT>" >&2
                 return 1
             else
                 if [[ -z $tty && -z $SSH_TTY ]] ; then
@@ -248,7 +248,7 @@ nc-action() { # Send or Listen packets
             ;;
         "send")
             if [ "$#" -ne 3 ]; then
-                echo "Usage: nc-action send <IP> <PORT>" >&2
+                echo "Usage: nc-cli send <IP> <PORT>" >&2
                 return 1
             else
                 sudo nc "$2" "$3" -e "$SHELL"
@@ -256,7 +256,7 @@ nc-action() { # Send or Listen packets
             fi
             ;;
         *)
-            echo "Unknown action. Usage: nc-action [listen|send] <arguments>" >&2
+            echo "Unknown action. Usage: nc-cli [listen|send] <arguments>" >&2
             return 1
             ;;
     esac
