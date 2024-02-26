@@ -239,7 +239,11 @@ nc-action() { # Send or Listen packets
                 echo "Usage: nc-action listen <IP> <PORT>" >&2
                 return 1
             else
-                sudo nc -lvnp "$3" -s "$2"
+                if [[ -z $tty && -z $SSH_TTY ]] ; then
+                    pkexec nc -lvnp "$3" -s "$2"
+                else
+                    sudo nc -lvnp "$3" -s "$2"
+                fi
             fi
             ;;
         "send")
