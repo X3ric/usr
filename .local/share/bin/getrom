@@ -22,9 +22,12 @@ for archive in "$dir/$file"*; do
 done
 if ! command -v retroarch &> /dev/null; then
     sudo pacman -Sy retroarch retroarch-assets-xmb
-    echo -e "Insstalling all retroarch cores\n"
-    sudo pacman -Sy libretro-beetle-pce libretro-beetle-psx libretro-beetle-supergrafx libretro-blastem libretro-bsnes libretro-citra libretro-melonds libretro-dolphin libretro-flycast libretro-gambatte libretro-genesis-plus-gx libretro-kronos libretro-mame libretro-mesen libretro-mgba libretro-mupen64plus-next libretro-nestopia libretro-scummvm libretro-ppsspp libretro-retrodream libretro-sameboy libretro-shaders-slang libretro-snes9x libretro-yabause
-else
+        echo -e "Install all retroarch cores [Y]n? \c"
+        read cores
+        if [[ $cores != "n"  ]]; then
+            sudo pacman -Sy libretro-beetle-pce libretro-beetle-pce-fast libretro-beetle-psx libretro-beetle-psx-hw libretro-beetle-supergrafx libretro-blastem libretro-bsnes libretro-bsnes-hd libretro-bsnes2014 libretro-citra libretro-desmume libretro-dolphin libretro-flycast libretro-gambatte libretro-genesis-plus-gx libretro-kronos libretro-mame libretro-mame2016 libretro-melonds libretro-mesen libretro-mesen-s libretro-mgba libretro-mupen64plus-next libretro-nestopia libretro-overlays libretro-parallel-n64 libretro-pcsx2 libretro-picodrive libretro-play libretro-ppsspp libretro-retrodream libretro-sameboy libretro-scummvm libretro-shaders-slang libretro-snes9x libretro-yabause
+        fi
+    else
     retroarch --scan ~/Downloads/roms
     if ! pidof retroarch &> /dev/null; then
         retroarch &!
