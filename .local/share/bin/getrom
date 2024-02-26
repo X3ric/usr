@@ -26,7 +26,7 @@ if ! command -v retroarch &> /dev/null; then
     sudo pacman -Sy libretro-beetle-pce libretro-beetle-psx libretro-beetle-supergrafx libretro-blastem libretro-bsnes libretro-citra libretro-melonds libretro-dolphin libretro-flycast libretro-gambatte libretro-genesis-plus-gx libretro-kronos libretro-mame libretro-mesen libretro-mgba libretro-mupen64plus-next libretro-nestopia libretro-scummvm libretro-ppsspp libretro-retrodream libretro-sameboy libretro-shaders-slang libretro-snes9x libretro-yabause
 else
     retroarch --scan ~/Downloads/roms
-    if ! pid retroarch &> /dev/null; then
+    if ! pidof retroarch &> /dev/null; then
         retroarch &!
     else
         echo -e "Restart Retroarch to view new roms \n [Y]n? \c"
