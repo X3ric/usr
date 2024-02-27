@@ -11,7 +11,6 @@
 button {
 	--accentcolor: var(--accent-alt);
 }
-
  
 :root {
     --font-primary: 'OCR A' ;
@@ -20,7 +19,7 @@ button {
     /*--avatar-size:        16px;*/
 	--background-color: rgba(8,8,8,0.95);
     --background-image:  url('');
-    --home-image:        url('https://64.media.tumblr.com/8da1fc2835ca6dd2879980fbc54babf9/tumblr_mxr0wx1BlO1sso6sco1_500.gifv');
+    --home-image:  url('https://i.imgur.com/233d55Y.gif');
     --background-solid:      rgba(8,8,8,0.5);
     --background-solid-dark:      rgba(5,5,5,0.5);
     --background-solid-darker:       rgba(3, 3, 3, 0.35);
@@ -92,7 +91,6 @@ span[class^="expandedFolderBackground-"] {
 div[data-list-item-id="guildsnav___home"] {
 	background: var(--home-image) top center/110% no-repeat;
 }
-
 
 #app-mount [data-list-item-id="guildsnav___home"]>div {
 	color: transparent;
@@ -332,4 +330,14 @@ div[role="menuitem"] {
 
 div[role="menuitem"]:active {
 	--vaccentcolor: var(--accent);
+}
+
+/* Screen Share */
+
+.theme-dark {
+--modal-background: rgb(0 0 0 / 50%);
+}
+
+.footer__89240 {
+    background-color: rgb(0 0 0 / 35%);
 }
