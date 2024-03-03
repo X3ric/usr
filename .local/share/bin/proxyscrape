@@ -3,7 +3,7 @@
 proxytest() { # Proxy tester
     local ip=$(echo "$1" | cut -d':' -f2 | sed 's|//||')
     local port=$(echo "$1" | cut -d':' -f3)
-    local info=$(curl --connect-timeout 10 -x "$1" -s -w '\n%{time_total}' "https://ipinfo.io")
+    local info=$(curl --connect-timeout 5 -x "$1" -s -w '\n%{speed_download}' "https://ipinfo.io")
     if [[ ! -z $info ]]; then
         local speed=$(echo "$info" | sed -n '13p' )
         local country=$(echo "$info" | grep -o '"country": *"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
@@ -254,31 +254,28 @@ proxytest() { # Proxy tester
                 "WF") country+="🇼🇫";;
                 "EH") country+="🇪🇭";;
                 "YE") country+="🇾🇪";;
+                "XK") country+="🇽🇰";;
                 "ZM") country+="🇿🇲";;
                 "ZW") country+="🇿🇼";;
                 *) country+="🌐";;
             esac
         fi
-        #local hostname=$(echo "$info" | jq -r ".hostname")
-        #local city=$(echo "$info" | jq -r ".city")
-        #local region=$(echo "$info" | jq -r ".region")
-        #local loc=$(echo "$info" | jq -r ".loc")
-        #local org=$(echo "$info" | jq -r ".org")
-        #local postal=$(echo "$info" | jq -r ".postal")
-        #local timezone=$(echo "$info" | jq -r ".timezone")
         local type=$(echo "$prefix" | cut -d':' -f1)
         local results="$HOME/.cache/$type.txt"
-        [[ -z $results ]] && touch $results
+        [[ ! -f $results ]] && touch $results
+        [[ ! -f "$HOME/.cache/proxylist.txt" ]] && touch "$HOME/.cache/proxylist.txt"
         if ! grep -qF "$ip:$port" "$results" && [[ ! -z $country ]] ; then
+            echo "$ip:$port" >> "$HOME/.cache/proxylist.txt"
             echo "$ip:$port" >> "$results"
-            echo -e "$(printf '%-25s' "$ip:$port") $(printf '%-8s' "$country") $(printf '%-20s' "Speed[$speed]") Saved in $results"
+            if [ -z "$speed" ]; then
+                speed=0
+            fi
+            echo -e "$(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;38mCurrent $2\033[0m"
             return 0
         else
-            #echo -e "$ip:$port Country[$country] Speed[$speed]"
             return 0
         fi
     else
-        #echo -e "$ip:$port proxy unrechable."
         return 1
     fi
 }
@@ -286,24 +283,34 @@ urls=(
     "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks4.txt"
     "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/socks5.txt"
     "https://raw.githubusercontent.com/TheSpeedX/SOCKS-List/master/http.txt"
-    "https://github.com/hookzof/socks5_list/blob/master/proxy.txt"
-    "https://github.com/clarketm/proxy-list"
-    "https://github.com/MuRongPIG/Proxy-Master/blob/main/http.txt"
-    "https://github.com/MuRongPIG/Proxy-Master/blob/main/socks4.txt"
-    "https://github.com/MuRongPIG/Proxy-Master/blob/main/socks5.txt"
+    "https://raw.githubusercontent.com/hookzof/socks5_list/master/proxy.txt"
+    "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/http.txt"
+    "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks4.txt"
+    "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks5.txt"
 )
-for url in "${urls[@]}"; do
-    if [[ $url == *"socks5"* ]]; then
+[[ -f "$HOME/.cache/socks4.txt" ]] && cat "$HOME/.cache/socks4.txt" >> /tmp/proxies
+[[ -f "$HOME/.cache/socks5.txt" ]] && cat "$HOME/.cache/socks5.txt" >> /tmp/proxies
+[[ -f "$HOME/.cache/http.txt" ]] && cat "$HOME/.cache/http.txt" >> /tmp/proxies
+rm -rf "$HOME/.cache/socks4.txt" 2> /dev/null
+rm -rf "$HOME/.cache/socks5.txt" 2> /dev/null
+rm -rf "$HOME/.cache/http.txt" 2> /dev/null
+rm -f /tmp/proxies 2> /dev/null
+urlfetch() {
+    if [[ $1 == *"socks5"* ]]; then
         prefix="socks5://"
-    elif [[ $url == *"socks4"* ]]; then
+    elif [[ $1 == *"socks4"* ]]; then
         prefix="socks4://"
     else
         prefix="http://"
     fi
-    curl -s "$url" | while read -r line; do
-        ip_port=$(echo "$line")
-        if [[ ! -z $ip_port ]]; then
-            proxytest "${prefix}${ip_port}" &
-        fi
-    done
+    curl -s "$1" | while IFS= read -r line; do echo "$prefix$line"; done >> /tmp/proxies
+}
+for url in "${urls[@]}"; do
+    urlfetch "$url"
 done
+counter=1
+proxies=$(wc --lines < /tmp/proxies | awk '{print $1}')
+while IFS= read -r line; do
+    ((counter++))
+    proxytest "${line}" "${counter}/${proxies}" &
+done < /tmp/proxies
