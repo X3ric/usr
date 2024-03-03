@@ -268,9 +268,13 @@ proxytest() { # Proxy tester
             echo "$ip:$port" >> "$HOME/.cache/proxylist.txt"
             echo "$ip:$port" >> "$results"
             if [ -z "$speed" ]; then
-                speed=0
+                speed="<50"
             fi
-            echo -e "$(printf '\033[1;38m%-12s\033[0m' "$(echo $(< "/tmp/proxy-counter.txt")/${proxies})") $(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;37mFinded $(wc --lines < $HOME/.cache/proxylist.txt | awk '{print $1}')\033[0m"
+            counter=$(< "/tmp/proxy-counter.txt")
+            while [ "$counter" == "" ]; do
+                sleep 1
+            done
+            echo -e "$(printf '\033[1;38m%-5s\033[0m' "$counter")/$(printf '\033[1;38m%-5s\033[0m' "$proxies") $(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;37mFinded $(wc --lines < $HOME/.cache/proxylist.txt | awk '{print $1}')\033[0m"
             return 0
         fi
     else
@@ -294,13 +298,13 @@ rm -f "$HOME/.cache/socks5.txt" 2> /dev/null
 rm -f "$HOME/.cache/http.txt" 2> /dev/null
 rm -f /tmp/proxies 2> /dev/null
 if [[ "$HOME/.cache/proxylist.txt" == *"socks5"* ]]; then
-    prefix="socks5://"
+    prefixlist="socks5://"
 elif [[ "$HOME/.cache/proxylist.txt" == *"socks4"* ]]; then
-    prefix="socks4://"
+    prefixlist="socks4://"
 else
-    prefix="http://"
+    prefixlist="http://"
 fi
-cat "$HOME/.cache/proxylist.txt" | while IFS= read -r line; do echo "$prefix$line"; done >> /tmp/proxies
+cat "$HOME/.cache/proxylist.txt" | while IFS= read -r line; do echo "$prefixlist$line"; done >> /tmp/proxies
 rm -f "$HOME/.cache/proxylist.txt" 2> /dev/null
 urlfetch() {
     if [[ $1 == *"socks5"* ]]; then
