@@ -1,5 +1,6 @@
-PATH="$PATH:/$HOME/.local/share/bin"
-PATH="$PATH:/$HOME/.config/emacs/bin"
+export PATH="$PATH:/$HOME/.local/share/bin"
+export PATH="$PATH:/$HOME/.config/emacs/bin"
+export PATH="$PATH:/home/e/.local/bin"
 export LAYOUT="setxkbmap -query | awk '/layout:/ {print $2}'"
 export XDG_CONFIG_HOME="$HOME/.config"
 export HISTSIZE=10000
