@@ -270,9 +270,7 @@ proxytest() { # Proxy tester
             if [ -z "$speed" ]; then
                 speed=0
             fi
-            echo -e "$(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;38mCurrent $2\033[0m"
-            return 0
-        else
+            echo -e "$(printf '\033[1;38m%-12s\033[0m' "$(echo $(< "/tmp/proxy-counter.txt")/${proxies})") $(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;37mFinded $(wc --lines < $HOME/.cache/proxylist.txt | awk '{print $1}')\033[0m"
             return 0
         fi
     else
@@ -291,10 +289,19 @@ urls=(
 [[ -f "$HOME/.cache/socks4.txt" ]] && cat "$HOME/.cache/socks4.txt" >> /tmp/proxies
 [[ -f "$HOME/.cache/socks5.txt" ]] && cat "$HOME/.cache/socks5.txt" >> /tmp/proxies
 [[ -f "$HOME/.cache/http.txt" ]] && cat "$HOME/.cache/http.txt" >> /tmp/proxies
-rm -rf "$HOME/.cache/socks4.txt" 2> /dev/null
-rm -rf "$HOME/.cache/socks5.txt" 2> /dev/null
-rm -rf "$HOME/.cache/http.txt" 2> /dev/null
+rm -f "$HOME/.cache/socks4.txt" 2> /dev/null
+rm -f "$HOME/.cache/socks5.txt" 2> /dev/null
+rm -f "$HOME/.cache/http.txt" 2> /dev/null
 rm -f /tmp/proxies 2> /dev/null
+if [[ "$HOME/.cache/proxylist.txt" == *"socks5"* ]]; then
+    prefix="socks5://"
+elif [[ "$HOME/.cache/proxylist.txt" == *"socks4"* ]]; then
+    prefix="socks4://"
+else
+    prefix="http://"
+fi
+cat "$HOME/.cache/proxylist.txt" | while IFS= read -r line; do echo "$prefix$line"; done >> /tmp/proxies
+rm -f "$HOME/.cache/proxylist.txt" 2> /dev/null
 urlfetch() {
     if [[ $1 == *"socks5"* ]]; then
         prefix="socks5://"
@@ -308,9 +315,10 @@ urlfetch() {
 for url in "${urls[@]}"; do
     urlfetch "$url"
 done
-counter=1
 proxies=$(wc --lines < /tmp/proxies | awk '{print $1}')
+counter=0
+rm -f /tmp/proxy-counter.txt
 while IFS= read -r line; do
-    ((counter++))
-    proxytest "${line}" "${counter}/${proxies}" &
+    ((counter++)) && echo "$counter" > /tmp/proxy-counter.txt
+    proxytest "${line}" &
 done < /tmp/proxies
