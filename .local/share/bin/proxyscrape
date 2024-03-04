@@ -1,8 +1,15 @@
 #!/bin/bash
 # Proxy letcher and tester
 proxytest() { # Proxy tester
-    local ip=$(echo "$1" | cut -d':' -f2 | sed 's|//||')
+    local ip=$(echo "$1" | rev | cut -d':' -f2 | rev | sed 's|//||')
     local port=$(echo "$1" | cut -d':' -f3)
+    if [[ $1 == *"socks5"* ]]; then
+        local type="socks5"
+    elif [[ $1 == *"socks4"* ]]; then
+        local type="socks4"
+    else
+        local type="http"
+    fi
     local info=$(curl --connect-timeout 5 -x "$1" -s -w '\n%{speed_download}' "https://ipinfo.io")
     if [[ ! -z $info ]]; then
         local speed=$(echo "$info" | sed -n '13p' )
@@ -260,11 +267,10 @@ proxytest() { # Proxy tester
                 *) country+="🌐";;
             esac
         fi
-        local type=$(echo "$prefix" | cut -d':' -f1)
         local results="$HOME/.cache/$type.txt"
         [[ ! -f $results ]] && touch $results
         [[ ! -f "$HOME/.cache/proxylist.txt" ]] && touch "$HOME/.cache/proxylist.txt"
-        if ! grep -qF "$ip:$port" "$results" && [[ ! -z $country ]] && [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then # ipv4
+        if ! grep -qF "$ip:$port" "$results" && [[ ! -z $country ]]; then
             echo "$ip:$port" >> "$HOME/.cache/proxylist.txt"
             echo "$ip:$port" >> "$results"
             if [ -z "$speed" ]; then
