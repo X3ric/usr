@@ -290,21 +290,23 @@ urls=(
     "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks4.txt"
     "https://raw.githubusercontent.com/MuRongPIG/Proxy-Master/main/socks5.txt"
 )
-[[ -f "$HOME/.cache/socks4.txt" ]] && cat "$HOME/.cache/socks4.txt" >> /tmp/proxies
-[[ -f "$HOME/.cache/socks5.txt" ]] && cat "$HOME/.cache/socks5.txt" >> /tmp/proxies
-[[ -f "$HOME/.cache/http.txt" ]] && cat "$HOME/.cache/http.txt" >> /tmp/proxies
+rm -f /tmp/proxies 2> /dev/null
+filefetch() {
+    if [[ "$1" == *"socks5"* ]]; then
+        prefixlist="socks5://"
+    elif [[ "$1" == *"socks4"* ]]; then
+        prefixlist="socks4://"
+    else
+        prefixlist="http://"
+    fi
+    cat "$1" | while IFS= read -r line; do echo "$prefixlist$line"; done >> /tmp/proxies
+}
+[[ -f "$HOME/.cache/socks4.txt" ]] && filefetch "$HOME/.cache/socks4.txt" && cat "$HOME/.cache/socks4.txt" >> /tmp/proxies
+[[ -f "$HOME/.cache/socks5.txt" ]] && filefetch "$HOME/.cache/socks5.txt" && cat "$HOME/.cache/socks5.txt" >> /tmp/proxies
+[[ -f "$HOME/.cache/http.txt" ]] && filefetch "$HOME/.cache/http.txt" && cat "$HOME/.cache/http.txt" >> /tmp/proxies
 rm -f "$HOME/.cache/socks4.txt" 2> /dev/null
 rm -f "$HOME/.cache/socks5.txt" 2> /dev/null
 rm -f "$HOME/.cache/http.txt" 2> /dev/null
-rm -f /tmp/proxies 2> /dev/null
-if [[ "$HOME/.cache/proxylist.txt" == *"socks5"* ]]; then
-    prefixlist="socks5://"
-elif [[ "$HOME/.cache/proxylist.txt" == *"socks4"* ]]; then
-    prefixlist="socks4://"
-else
-    prefixlist="http://"
-fi
-cat "$HOME/.cache/proxylist.txt" | while IFS= read -r line; do echo "$prefixlist$line"; done >> /tmp/proxies
 rm -f "$HOME/.cache/proxylist.txt" 2> /dev/null
 urlfetch() {
     if [[ $1 == *"socks5"* ]]; then
@@ -322,6 +324,7 @@ done
 proxies=$(wc --lines < /tmp/proxies | awk '{print $1}')
 counter=0
 rm -f /tmp/proxy-counter.txt
+tac /tmp/proxies | awk '!seen[$0]++' | tac > /tmp/proxies_clean && mv /tmp/proxies_clean /tmp/proxies # clean repeated ip:port from bottom
 while IFS= read -r line; do
     ((counter++)) && echo "$counter" > /tmp/proxy-counter.txt
     proxytest "${line}" &
