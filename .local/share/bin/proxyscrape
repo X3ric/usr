@@ -264,7 +264,7 @@ proxytest() { # Proxy tester
         local results="$HOME/.cache/$type.txt"
         [[ ! -f $results ]] && touch $results
         [[ ! -f "$HOME/.cache/proxylist.txt" ]] && touch "$HOME/.cache/proxylist.txt"
-        if ! grep -qF "$ip:$port" "$results" && [[ ! -z $country ]] ; then
+        if ! grep -qF "$ip:$port" "$results" && [[ ! -z $country ]] && [[ $ip =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then # ipv4
             echo "$ip:$port" >> "$HOME/.cache/proxylist.txt"
             echo "$ip:$port" >> "$results"
             if [ -z "$speed" ]; then
