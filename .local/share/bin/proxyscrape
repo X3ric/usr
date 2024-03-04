@@ -267,6 +267,7 @@ proxytest() { # Proxy tester
                 *) country+="🌐";;
             esac
         fi
+        local realip=$(echo "$info" | grep -o '"ip": *"[^"]*"' | grep -o '"[^"]*"$' | tr -d '"')
         local results="$HOME/.cache/$type.txt"
         [[ ! -f $results ]] && touch $results
         [[ ! -f "$HOME/.cache/proxylist.txt" ]] && touch "$HOME/.cache/proxylist.txt"
@@ -280,7 +281,11 @@ proxytest() { # Proxy tester
             while [ "$counter" == "" ]; do
                 sleep 1
             done
-            echo -e "$(printf '\033[1;38m%-5s\033[0m' "$counter")/$(printf '\033[1;38m%-5s\033[0m' "$proxies") $(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;37mFinded $(wc --lines < $HOME/.cache/proxylist.txt | awk '{print $1}')\033[0m"
+            local hided=""
+            if [[ $realip != $ip ]]; then
+                hided="Hided"
+            fi
+            echo -e "$(printf '\033[1;38m%-5s\033[0m' "$counter")/$(printf '\033[1;38m%-5s\033[0m' "$proxies") $(printf '\033[1;34m%-21s\033[0m' "$ip:$port") $(printf '\033[1;32m%-8s\033[0m' "$country") $(printf '\033[1;31m%-10s\033[0m' "Speed[$speed]") \033[1;36mSaved in $results\033[0m \033[1;37mFinded $(wc --lines < $HOME/.cache/proxylist.txt | awk '{print $1}')\033[0m $(printf '\033[1;38m%-10s\033[0m' "$hided")"
             return 0
         fi
     else
