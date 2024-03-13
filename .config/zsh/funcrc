@@ -482,6 +482,29 @@ tts() { # Google TextToSpech
   fi
 }
 
+speak() { # Speak trought mic with tts
+    local text="$1"
+    if [[ -z "$text" ]]; then
+        echo "Usage: speak <text>"
+        return 1
+    fi
+    tts "$text" it | paplay --raw --rate=44100 --channels=2 --format=s16le -d virtual_mic.monitor
+}
+
+vmic() { # Virtual mic toggle
+    if pactl list modules | grep -q "virtual_mic"; then
+        pactl unload-module module-remap-source
+        pactl unload-module module-null-sink
+        pactl unload-module module-loopback
+        echo "Microfono virtuale scaricato."
+    else
+        pactl load-module module-null-sink sink_name=virtual_mic
+        pactl load-module module-remap-source master=virtual_mic.monitor source_name=virtual_mic source_properties=device.description=Virtual_Microphone
+        pactl load-module module-loopback source=virtual_mic.monitor sink=alsa_output.pci-0000_00_14.2.analog-stereo
+        echo "Microfono virtuale caricato."
+    fi
+}
+
 pacman-list() { # list system packages aur/pacman
     case "$1" in
         -p)
