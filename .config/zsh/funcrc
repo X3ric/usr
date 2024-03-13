@@ -496,12 +496,12 @@ vmic() { # Virtual mic toggle
         pactl unload-module module-remap-source
         pactl unload-module module-null-sink
         pactl unload-module module-loopback
-        echo "Microfono virtuale scaricato."
+        echo "VirtualMic unloaded."
     else
         pactl load-module module-null-sink sink_name=virtual_mic
         pactl load-module module-remap-source master=virtual_mic.monitor source_name=virtual_mic source_properties=device.description=Virtual_Microphone
         pactl load-module module-loopback source=virtual_mic.monitor sink=alsa_output.pci-0000_00_14.2.analog-stereo
-        echo "Microfono virtuale caricato."
+        echo "VirtalMic loaded."
     fi
 }
 
