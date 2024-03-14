@@ -476,31 +476,23 @@ tts() { # Google TextToSpech
     temp_mp3_file="$3"
   fi
   curl -o "$temp_mp3_file" "$api_url" NUL
+  if pactl list modules | grep -q "virtual_mic" ;then
+    paplay -d virtual_mic "$temp_mp3_file" NUL &!
+  fi
   mpg123 "$temp_mp3_file" NUL
   if [[ -z $3 ]]; then
     rm "$temp_mp3_file" NUL
   fi
 }
 
-speak() { # Speak trought mic with tts
-    local text="$1"
-    if [[ -z "$text" ]]; then
-        echo "Usage: speak <text>"
-        return 1
-    fi
-    tts "$text" it | paplay --raw --rate=44100 --channels=2 --format=s16le -d virtual_mic.monitor
-}
-
 vmic() { # Virtual mic toggle
-    if pactl list modules | grep -q "virtual_mic"; then
-        pactl unload-module module-remap-source
-        pactl unload-module module-null-sink
-        pactl unload-module module-loopback
+    if pactl list modules | grep -q "virtual_mic" ;then
+        pactl unload-module module-remap-source NUL
+        pactl unload-module module-null-sink NUL
         echo "VirtualMic unloaded."
     else
-        pactl load-module module-null-sink sink_name=virtual_mic
-        pactl load-module module-remap-source master=virtual_mic.monitor source_name=virtual_mic source_properties=device.description=Virtual_Microphone
-        pactl load-module module-loopback source=virtual_mic.monitor sink=alsa_output.pci-0000_00_14.2.analog-stereo
+        pactl load-module module-null-sink sink_name=virtual_mic NUL
+        pactl load-module module-remap-source master=virtual_mic.monitor source_name=virtual_mic NUL
         echo "VirtalMic loaded."
     fi
 }
