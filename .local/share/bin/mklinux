@@ -51,6 +51,7 @@ function replacebuiltin() {
     sudo echo -e "$POWEROFF" > "$DIRLX/bootloader/initramfs/sbin/poweroff"
     sudo chmod +x "$DIRLX/bootloader/initramfs/sbin/poweroff"
 }
+
 function disk() {
     if [[ ! -f "$DIRLX/bootloader/disk.img" ]]; then
         cd "$DIRLX/bootloader/"
@@ -109,23 +110,33 @@ function install() {
     mkdir -p "$DIRLX"/bootloader/initramfs/usr/share
     cd "$DIRLX"/bootloader/initramfs/usr/share
     loadkeys -b /usr/share/kbd/keymaps/i386/qwerty/$(setxkbmap -query | awk '/layout:/ {print $2}').map.gz > key.bmap
-    cd "$DIRLX/bootloader/initramfs/usr/bin"
-    # Iw for connection on physical hardware
-    #cd "$DIRLX/"
-    #git clone https://github.com/drygdryg/wifi_tools_static.git
-    #cd ./wifi_tools_static
-    #make iw
-    #cp ./binaries/iw $DIRLX/bootloader/initramfs/usr/bin/iw
-    #cd ..
-    #sudo rm .install
-    #sudo chmod +x $DIRLX/bootloader/initramfs/usr/bin/iw
+    cd "$DIRLX/bootloader/initramfs/"
+    # imported bins
+        cd "$DIRLX/bootloader/initramfs/usr/bin"
+        # Iw for connection on physical hardware
+            #cd "$DIRLX/"
+            #git clone https://github.com/drygdryg/wifi_tools_static.git
+            #cd ./wifi_tools_static
+            #make iw
+            #cp ./binaries/iw $DIRLX/bootloader/initramfs/usr/bin/iw
+            #cd ..
+            #sudo rm .install
+            #sudo chmod +x $DIRLX/bootloader/initramfs/usr/bin/iw
     image
+}
+function reimage() {
+    image
+    disk
 }
 function run() {
     if [[ ! -d "$DIRLX/bootloader" ]]; then
         install
     else
-        image
+        if [[ $1 == "-ri" ]] ; then
+            reimage
+        else
+            image
+        fi
     fi
     echo "System Linux running"
     cd "$DIRLX/bootloader/"
@@ -153,7 +164,7 @@ elif [[ $1 == "-b" ]]; then
     install
     run
 elif [[ $1 == "--help" || "$1" == "-h" ]]; then
-    echo -e "Linux From Scratch\n -c = clean previous build\n -r = remove all\n -u = upgrade repos\n -m = menuconfig\n -b = clean and build"
+    echo -e "Linux From Scratch\n -c = clean previous build\n -ri = reimage\n -r = remove all\n -u = upgrade repos\n -m = menuconfig\n -b = clean and build"
     exit 0
 elif [[ -d "$DIRLX" ]]; then
     run
