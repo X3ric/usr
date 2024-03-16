@@ -1,7 +1,7 @@
 #!/bin/bash
 # Linux From Scratch in a WM
 # Deps
-check_install_dependency() {
+function check_install_dependency() {
     local dependency=$1
     local install_command=$2
     if ! pacman -Q $dependency &> /dev/null; then
@@ -110,8 +110,6 @@ function install() {
     cd "$DIRLX"/bootloader/initramfs/usr/share
     loadkeys -b /usr/share/kbd/keymaps/i386/qwerty/$(setxkbmap -query | awk '/layout:/ {print $2}').map.gz > key.bmap
     cd "$DIRLX/bootloader/initramfs/usr/bin"
-    # Static linked bins
-    wget bin.n0p.me/x64/rg 2> /dev/null && sudo chmod +x ./rg
     # Iw for connection on physical hardware
     #cd "$DIRLX/"
     #git clone https://github.com/drygdryg/wifi_tools_static.git
