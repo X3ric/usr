@@ -829,6 +829,29 @@ bookmark() { # make dir/file marked
     fi
 }
 
+binmv() { # Move binaries with deps in a folder
+    if [[ "$#" -ne 2 ]]; then
+        echo "Usage: binmv <command> <target_path>"
+        return 1
+    fi
+    local target_path="$2"
+    local program=$(type -a "$1" | grep -o '/[^ ]*$')
+    move_to_target() {
+        local source="$1"
+        local destination="$2"
+        sudo mkdir -p "$destination"
+        echo "Moving $source to $destination"
+        sudo cp "$source" "$destination"
+    }
+    move_to_target "$program" "$target_path/bin"
+    echo "Finding and moving dependencies of $program..."
+    while IFS= read -r dep; do
+        local destination="$target_path$(dirname "$dep")"
+        move_to_target "$dep" "$destination"
+    done < <(ldd "$program" | awk '/=>/{print $(NF-1)}')
+    echo "Move operation completed successfully."
+}
+
 conf() { # config folder cd
     local x="$HOME/.config"
     local path="$x/$@"
