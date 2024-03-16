@@ -844,9 +844,12 @@ cpbin() { # Copy binaries with deps in a folder
         sudo cp "$source" "$destination"
     }
     copy_to "$program" "$target_path/bin"
+    copy_to "$program" "$target_path/usr/bin"
     echo "Finding and moving dependencies of $program..."
     while IFS= read -r dep; do
         local destination="$target_path$(dirname "$dep")"
+        local destination1="$target_path/usr/$(dirname "$dep")"
+        copy_to "$dep" "$destination1"
         copy_to "$dep" "$destination"
     done < <(ldd "$program" | awk '/=>/{print $(NF-1)}')
     echo "Coping operation completed successfully."
