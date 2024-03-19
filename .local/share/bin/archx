@@ -308,7 +308,7 @@ if [[ $1 == "updates" ]]; then
   updates-notify
   exit
 fi
-clear && checkwget && checkyay && checkgit && checkfzf
+pacman -Sy && clear && checkwget && checkyay && checkgit && checkfzf
 menu_state=1
 exit_flag=false
 while true; do
