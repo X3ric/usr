@@ -176,11 +176,13 @@ loading_animation() {
         }
       # XForks
         function installpicom {
-            mkdir -p picomx && cd picomx && (curl -O https://raw.githubusercontent.com/X3ric/picom/next/PKGBUILD && makepkg -si) && cd .. && rm -rf picomx
-            awesome-client "awesome.restart()" > /dev/null 2>&1
+            curl -s https://raw.githubusercontent.com/X3ric/picom/next/install | bash
+            if pgrep awesome > /dev/null; then
+                awesome-client "awesome.restart()" > /dev/null 2>&1
+            fi
           }
         function installctpv {
-            mkdir -p ctpvx && cd ctpvx && (curl -O https://raw.githubusercontent.com/X3ric/ctpv/master/PKGBUILD && makepkg -si) && cd .. && rm -rf ctpvx
+            curl -s https://raw.githubusercontent.com/X3ric/ctpv/master/install | bash
           }
 # ArchX
   function updates() {
